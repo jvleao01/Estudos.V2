@@ -38,7 +38,7 @@
         return {
           titulo: p.titulo,
           data,
-          materia: porId.get(p.materiaId) || null,
+          materia: porId.get(p.materiaId) || p.materia || null, // matéria sem tempo na semana vem na própria prova
           diasRestantes,
           urgente: diasRestantes <= 3,
         };

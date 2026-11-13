@@ -1,57 +1,24 @@
 /*
- * Fonte de dados do Dashboard.
- * Hoje: dados de exemplo. Depois: trocar o corpo de getDashboardData() por
- * um fetch('/api/dashboard') que devolva exatamente este mesmo formato.
+ * Fonte de dados do Dashboard: /api/dashboard (sessões do Cronômetro + provas pendentes).
+ * Formato: { semana: {inicio, fim}, materias: [{id, nome, cor, minutosSemana}],
+ *            porDia: [{dia, minutos}] (Seg..Dom), provas: [{materiaId, titulo, data, materia: {nome, cor}}] }
+ * No navegador depende de api.js (apiFetch).
  */
 (function (root) {
-  function isoLocal(d) {
-    const p = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-  }
+  const p2 = (n) => String(n).padStart(2, '0');
 
-  function diasAPartirDeHoje(n) {
-    const d = new Date();
-    d.setDate(d.getDate() + n);
-    return isoLocal(d);
-  }
-
-  function semanaAtual() {
-    const hoje = new Date();
+  // Segunda-feira da semana de `hoje`, pela data local, em AAAA-MM-DD.
+  function segundaFeira(hoje) {
     const offset = (hoje.getDay() + 6) % 7; // segunda = 0
-    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - offset);
-    const fim = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + 6);
-    return { inicio: isoLocal(inicio), fim: isoLocal(fim) };
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - offset);
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
   }
 
-  function getDashboardData() {
-    return {
-      semana: semanaAtual(),
-      materias: [
-        { id: 1, nome: 'Cálculo', cor: '#6c8cff', minutosSemana: 380 },
-        { id: 2, nome: 'Física', cor: '#2ec4b6', minutosSemana: 265 },
-        { id: 3, nome: 'Programação', cor: '#f4a261', minutosSemana: 310 },
-        { id: 4, nome: 'Química', cor: '#e76f9a', minutosSemana: 150 },
-        { id: 5, nome: 'Inglês', cor: '#b388ff', minutosSemana: 95 },
-        { id: 6, nome: 'História', cor: '#e9c46a', minutosSemana: 60 },
-      ],
-      porDia: [
-        { dia: 'Seg', minutos: 180 },
-        { dia: 'Ter', minutos: 210 },
-        { dia: 'Qua', minutos: 120 },
-        { dia: 'Qui', minutos: 240 },
-        { dia: 'Sex', minutos: 150 },
-        { dia: 'Sáb', minutos: 260 },
-        { dia: 'Dom', minutos: 100 },
-      ],
-      provas: [
-        { materiaId: 1, titulo: 'P2 de Cálculo', data: diasAPartirDeHoje(2) },
-        { materiaId: 2, titulo: 'Prova de Física', data: diasAPartirDeHoje(6) },
-        { materiaId: 3, titulo: 'Avaliação prática', data: diasAPartirDeHoje(11) },
-        { materiaId: 4, titulo: 'Química orgânica', data: diasAPartirDeHoje(18) },
-      ],
-    };
+  function getDashboardData(hoje = new Date()) {
+    return apiFetch(`/api/dashboard?inicio=${segundaFeira(hoje)}`);
   }
 
-  if (typeof module !== 'undefined' && module.exports) module.exports = { getDashboardData };
-  else root.getDashboardData = getDashboardData;
+  const api = { segundaFeira, getDashboardData };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

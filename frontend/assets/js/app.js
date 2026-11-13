@@ -1,4 +1,4 @@
-/* Renderização do Dashboard. Depende de: Chart.js, data.js, dashboard-utils.js */
+/* Renderização do Dashboard. Depende de: Chart.js, api.js, data.js, dashboard-utils.js */
 (function () {
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const MSG_VAZIO = 'Nenhum estudo registrado nesta semana';
@@ -193,10 +193,22 @@
     renderPizza(data.materias, total);
   }
 
+  function renderErro(msg) {
+    document.getElementById('total-semana').textContent = '—';
+    for (const id of ['wrap-materias', 'lista-provas', 'wrap-dias', 'lista-ranking', 'wrap-pizza']) {
+      mostrarVazio(document.getElementById(id), msg);
+    }
+  }
+
   window.renderDashboard = renderDashboard;
   // Espera a fonte carregar: o Chart.js mede os rótulos no momento do desenho.
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     const fontes = document.fonts ? document.fonts.ready : Promise.resolve();
-    fontes.then(() => renderDashboard(getDashboardData()));
+    try {
+      const [data] = await Promise.all([getDashboardData(), fontes]);
+      renderDashboard(data);
+    } catch (e) {
+      renderErro(e.message);
+    }
   });
 })();

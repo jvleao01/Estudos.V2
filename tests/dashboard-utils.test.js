@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const {
   formatMinutos, rankMaterias, proximasProvas, rotuloDias, totalMinutos,
 } = require('../frontend/assets/js/dashboard-utils.js');
-const { getDashboardData } = require('../frontend/assets/js/data.js');
+const { segundaFeira } = require('../frontend/assets/js/data.js');
 
 test('formatMinutos', () => {
   assert.strictEqual(formatMinutos(0), '0min');
@@ -54,11 +54,15 @@ test('totalMinutos', () => {
   assert.strictEqual(totalMinutos([{ minutosSemana: 30 }, { minutosSemana: 45 }]), 75);
 });
 
-test('getDashboardData segue o contrato', () => {
-  const d = getDashboardData();
-  assert.strictEqual(d.materias.length, 6);
-  assert.strictEqual(d.porDia.length, 7);
-  assert.strictEqual(d.provas.length, 4);
-  for (const m of d.materias) assert.match(m.cor, /^#[0-9a-f]{6}$/i);
-  assert.strictEqual(new Set(d.materias.map((m) => m.cor)).size, 6, 'cores únicas');
+test('segundaFeira da semana local', () => {
+  assert.strictEqual(segundaFeira(new Date(2026, 10, 13, 10)), '2026-11-09'); // sexta
+  assert.strictEqual(segundaFeira(new Date(2026, 10, 15, 23, 30)), '2026-11-09'); // domingo à noite
+  assert.strictEqual(segundaFeira(new Date(2026, 10, 16, 0, 10)), '2026-11-16'); // segunda de madrugada
+  assert.strictEqual(segundaFeira(new Date(2026, 11, 31)), '2026-12-28'); // virada de ano
+});
+
+test('proximasProvas usa a matéria da própria prova quando ela não está na lista', () => {
+  const provas = [{ materiaId: 9, titulo: 'P1', data: '2026-11-20', materia: { nome: 'Química', cor: '#e76f9a' } }];
+  const r = proximasProvas(provas, [], new Date(2026, 10, 13));
+  assert.deepStrictEqual(r[0].materia, { nome: 'Química', cor: '#e76f9a' });
 });
