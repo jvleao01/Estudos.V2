@@ -22,6 +22,7 @@ Passo a passo manual:
    c:\xampp\mysql\bin\mysql -uroot -h127.0.0.1 -P8000 < backend\sql\bd.sql
    c:\xampp\mysql\bin\mysql -uroot -h127.0.0.1 -P8000 estudos < backend\sql\seed.sql
    ```
+   Já tinha o banco de uma versão anterior? Rode o `bd.sql` de novo para aplicar as mudanças (não apaga dados).
 3. Ambiente Python (só na primeira vez):
    ```
    python -m venv .venv

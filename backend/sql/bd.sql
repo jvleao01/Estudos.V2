@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS trabalhos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   materia_id INT NOT NULL,
   titulo VARCHAR(120) NOT NULL,
-  entrega DATE NULL,
+  entrega DATE NOT NULL,
   concluido BOOLEAN NOT NULL DEFAULT 0,
   CONSTRAINT fk_trabalho_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -38,5 +38,11 @@ CREATE TABLE IF NOT EXISTS provas (
   materia_id INT NOT NULL,
   titulo VARCHAR(120) NOT NULL,
   data DATE NOT NULL,
+  concluido BOOLEAN NOT NULL DEFAULT 0,
   CONSTRAINT fk_prova_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Atualizações para bancos criados por versões anteriores (pode rodar de novo, não apaga dados)
+UPDATE trabalhos SET entrega = CURDATE() WHERE entrega IS NULL;
+ALTER TABLE trabalhos MODIFY entrega DATE NOT NULL;
+ALTER TABLE provas ADD COLUMN IF NOT EXISTS concluido BOOLEAN NOT NULL DEFAULT 0;

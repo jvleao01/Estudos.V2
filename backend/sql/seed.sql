@@ -28,11 +28,12 @@ INSERT INTO trabalhos (materia_id, titulo, entrega, concluido) VALUES
   (1, 'Lista 1', CURDATE() - INTERVAL 10 DAY, 1),
   (1, 'Lista 2', CURDATE() - INTERVAL 2 DAY, 1),
   (1, 'Lista 3', CURDATE() + INTERVAL 5 DAY, 0),
-  (3, 'Projeto final', CURDATE() + INTERVAL 20 DAY, 0);
+  (3, 'Projeto final', CURDATE() + INTERVAL 20 DAY, 0),
+  (2, 'Relatório de laboratório', CURDATE() - INTERVAL 3 DAY, 0);
 
-INSERT INTO provas (materia_id, titulo, data) VALUES
-  (1, 'P2', CURDATE() + INTERVAL 2 DAY),
-  (1, 'P3', CURDATE() + INTERVAL 26 DAY),
-  (2, 'Prova 2', CURDATE() + INTERVAL 6 DAY),
-  (3, 'Avaliação prática', CURDATE() + INTERVAL 11 DAY),
-  (4, 'P1', CURDATE() - INTERVAL 3 DAY);
+INSERT INTO provas (materia_id, titulo, data, concluido) VALUES
+  (1, 'P2', CURDATE() + INTERVAL 2 DAY, 0),
+  (1, 'P3', CURDATE() + INTERVAL 26 DAY, 0),
+  (2, 'Prova 2', CURDATE() + INTERVAL 6 DAY, 0),
+  (3, 'Avaliação prática', CURDATE() + INTERVAL 11 DAY, 0),
+  (4, 'P1', CURDATE() - INTERVAL 3 DAY, 1);
