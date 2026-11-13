@@ -24,7 +24,8 @@
   };
   const ABAS = ['trabalhos', 'provas'];
 
-  const estado = { aba: 'trabalhos', trabalhos: [], provas: [], materias: [], editando: null };
+  // aberto: seção de concluídos aberta em cada aba (só durante a visita)
+  const estado = { aba: 'trabalhos', trabalhos: [], provas: [], materias: [], editando: null, aberto: {} };
   const $ = (id) => document.getElementById(id);
   const cfg = () => CONFIG[estado.aba];
 
@@ -84,7 +85,10 @@
         ? el('ul', { class: 'lista-itens' }, ...pendentes.map(itemPendente))
         : el('div', { class: 'estado' }, icone('check'), el('p', {}, 'Nada pendente por aqui.')),
       concluidos.length
-        ? el('details', { class: 'concluidos' },
+        ? el('details', {
+          class: 'concluidos', open: Boolean(estado.aberto[estado.aba]),
+          ontoggle: (e) => { estado.aberto[estado.aba] = e.target.open; },
+        },
           el('summary', {}, `${cfg().secao} (${concluidos.length})`),
           el('ul', { class: 'lista-itens' }, ...concluidos.map(itemFeito)))
         : null);
@@ -153,6 +157,11 @@
   }
 
   function abrirForm(item = null) {
+    if (!estado.carregado) {
+      toast('Não foi possível carregar os dados. Tentando de novo...', { erro: true });
+      carregar();
+      return;
+    }
     if (!item && !estado.materias.some((m) => m.status === 'cursando')) {
       toast('Cadastre uma matéria em Matérias antes de adicionar.', {
         acao: { texto: 'Ir para Matérias', fn: () => { location.href = 'materias.html'; } },
@@ -210,6 +219,10 @@
   ligarAbas(ABAS, irPara);
   ligarDialogs();
   $('btn-adicionar').addEventListener('click', () => abrirForm());
+  // A contagem de dias muda à meia-noite: recalcula ao voltar para a aba.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && estado.carregado) render();
+  });
   estado.aba = location.hash === '#provas' ? 'provas' : 'trabalhos';
   carregar();
 })();
