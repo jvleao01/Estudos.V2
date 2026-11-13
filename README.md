@@ -4,7 +4,19 @@ Webapp pessoal para controlar matérias, provas, trabalhos e tempo de estudo.
 
 ## Rodar
 
-1. Ligue o **MySQL** no painel do XAMPP (nesta máquina ele roda na porta **8000**; a 3306 é do MySQL 8).
+O XAMPP é usado **só como banco de dados** (MariaDB na porta **8000**; a 3306 é do MySQL 8).
+O backend é a API Flask em `backend/app.py`, que também entrega o frontend.
+
+**Atalho:** depois de fazer os passos 2 e 3 uma vez, basta dar dois cliques em `iniciar.bat`.
+Ele liga o MariaDB do XAMPP (sem precisar do painel), inicia a API e abre http://localhost:5000.
+Se o XAMPP não estiver em `c:\xampp`, defina a variável `XAMPP_DIR`.
+
+Passo a passo manual:
+
+1. Ligue o banco: no painel do XAMPP (só o **MySQL**, o Apache não é usado) ou direto:
+   ```
+   c:\xampp\mysql\bin\mysqld.exe --defaults-file=c:\xampp\mysql\bin\my.ini --standalone --console
+   ```
 2. Crie o banco (só na primeira vez) e, se quiser, carregue os dados de exemplo:
    ```
    c:\xampp\mysql\bin\mysql -uroot -h127.0.0.1 -P8000 < backend\sql\bd.sql
