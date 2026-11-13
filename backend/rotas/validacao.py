@@ -15,7 +15,7 @@ def erro(msg, status):
     return jsonify(erro=msg), status
 
 
-def _data_iso(valor):
+def validar_data(valor):
     if isinstance(valor, str) and RE_DATA.match(valor):
         try:
             return date.fromisoformat(valor).isoformat()
@@ -41,7 +41,7 @@ def validar_item(dados, campo_data, parcial=False):
             raise ErroValidacao("A descrição deve ter entre 1 e 120 caracteres.")
         limpo["titulo"] = titulo
     if campo_data in dados or not parcial:
-        limpo[campo_data] = _data_iso(dados.get(campo_data))
+        limpo[campo_data] = validar_data(dados.get(campo_data))
     if "concluido" in dados:
         if not isinstance(dados["concluido"], bool):
             raise ErroValidacao("O campo concluído deve ser verdadeiro ou falso.")
