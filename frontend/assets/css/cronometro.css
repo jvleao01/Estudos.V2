@@ -1,0 +1,79 @@
+/* Página Cronômetro — depende de componentes.css */
+
+.crono { display: grid; gap: 24px; justify-items: center; margin-top: 8px; }
+
+/* ---------- Matéria ---------- */
+.crono__materia { width: 100%; max-width: 420px; margin: 0; }
+.crono__select { position: relative; display: block; }
+.crono__select .ponto {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--cor, var(--borda));
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1; /* acima do fundo do select */
+}
+.crono__select select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px 0 36px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* evita zoom no iOS */
+  color-scheme: dark;
+}
+.crono__select select:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+.crono__select select:disabled { opacity: 0.75; cursor: not-allowed; }
+
+/* ---------- Relógio ---------- */
+.crono__mostrador {
+  display: grid;
+  place-items: center;
+  width: min(100%, 300px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  box-shadow: inset 0 0 0 6px var(--surface-2);
+  transition: box-shadow 200ms, opacity 200ms;
+}
+.crono__mostrador--rodando { box-shadow: inset 0 0 0 6px var(--accent); }
+.crono__mostrador--pausado { opacity: 0.7; }
+.crono__relogio {
+  font-size: clamp(40px, 13vw, 56px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.crono__mostrador { position: relative; }
+.crono__estado { position: absolute; left: 0; right: 0; top: calc(50% + 40px); text-align: center; color: var(--muted); font-size: 14px; font-weight: 600; }
+
+/* ---------- Controles ---------- */
+.crono__controles { display: flex; gap: 12px; width: 100%; max-width: 420px; }
+.crono__controles .btn { flex: 1; min-height: 52px; font-size: 16px; }
+.crono__cancelar {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.crono__cancelar:hover { color: var(--danger); }
+.crono__cancelar:focus-visible { outline: 2px solid var(--accent); }
+
+/* ---------- Resumo ---------- */
+.resumo { display: grid; }
+.resumo__tempo { margin: 4px 0 16px; font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.resumo__aviso { margin: -8px 0 16px; color: var(--danger); font-size: 14px; }
+.resumo .crono__cancelar { justify-self: center; margin-top: 8px; }
+#painel-vazio a { color: var(--accent); }

@@ -234,7 +234,9 @@
 }
 .toast--erro { border-color: var(--danger); }
 
-.toast { display: flex; align-items: center; gap: 12px; }
+/* O aviso não bloqueia cliques no que está embaixo; só o botão de ação dele é clicável. */
+.toast { display: flex; align-items: center; gap: 12px; pointer-events: none; }
+.toast__acao { pointer-events: auto; }
 .toast__acao {
   padding: 4px 8px;
   margin: -4px -8px -4px 0;
