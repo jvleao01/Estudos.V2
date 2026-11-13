@@ -108,9 +108,11 @@
 
   function ligarDialogs() {
     document.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
-    document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => {
-      if (e.target === d) d.close(); // clique no fundo escuro fecha
-    }));
+    document.querySelectorAll('dialog').forEach((d) => {
+      // clique no fundo escuro fecha; um diálogo com data-travado (ex.: salvando) não fecha
+      d.addEventListener('click', (e) => { if (e.target === d && !d.hasAttribute('data-travado')) d.close(); });
+      d.addEventListener('cancel', (e) => { if (d.hasAttribute('data-travado')) e.preventDefault(); });
+    });
   }
 
   // ---------- abas ----------

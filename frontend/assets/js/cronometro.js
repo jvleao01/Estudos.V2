@@ -7,6 +7,7 @@
 
   // fase: 'parado' | 'rodando' | 'pausado'
   const estado = { materias: [], fase: 'parado', acumuladoMs: 0, inicioTrecho: null, inicioSessao: null };
+  let saindo = false; // o usuário já confirmou sair pela barra de navegação
 
   const decorrido = () => decorridoMs(estado, Date.now());
   const emSessao = () => estado.fase !== 'parado';
@@ -96,6 +97,7 @@
     $('resumo-titulo').textContent = `Sessão de ${materiaAtual().nome}`;
     $('resumo-tempo').textContent = formatMinutos(minutos);
     $('resumo-aviso').hidden = minutos > 0;
+    $('resumo-erro').hidden = true;
     $('btn-salvar').disabled = minutos === 0;
     $('dlg-resumo').showModal();
   }
@@ -103,21 +105,29 @@
   async function salvar() {
     const m = materiaAtual();
     const minutos = arredondarMinutos(decorrido());
-    const botao = $('btn-salvar');
-    botao.disabled = true;
+    const dlg = $('dlg-resumo');
+    const travar = (sim) => {
+      // Enquanto salva, o resumo não fecha: senão o usuário retomaria e o fim do salvamento zeraria o tempo novo.
+      dlg.toggleAttribute('data-travado', sim);
+      for (const id of ['btn-salvar', 'btn-continuar', 'btn-descartar']) $(id).disabled = sim;
+    };
+    $('resumo-erro').hidden = true;
+    travar(true);
     try {
       await apiFetch('/api/sessoes', {
         method: 'POST',
         body: { materiaId: m.id, inicio: dataHoraLocalISO(estado.inicioSessao), minutos },
       });
-      $('dlg-resumo').close();
+      travar(false);
+      dlg.close();
       zerar();
       toast(`${formatMinutos(minutos)} salvos em ${m.nome}.`);
       carregarHoje().catch(() => {}); // o total do dia é só informativo
     } catch (e) {
-      toast(e.message, { erro: true }); // o resumo continua aberto e o tempo não se perde
-    } finally {
-      botao.disabled = minutos === 0;
+      // o resumo continua aberto e o tempo não se perde; a mensagem fica dentro do painel (o toast ficaria atrás dele)
+      travar(false);
+      $('resumo-erro').textContent = e.message;
+      $('resumo-erro').hidden = false;
     }
   }
 
@@ -143,9 +153,23 @@
 
   // Sair da página com sessão em andamento: o navegador pede confirmação (texto padrão dele).
   window.addEventListener('beforeunload', (e) => {
-    if (!emSessao()) return;
+    if (!emSessao() || saindo) return;
     e.preventDefault();
     e.returnValue = '';
+  });
+  // O iPhone ignora o beforeunload: a própria barra de navegação pergunta antes de sair.
+  document.querySelectorAll('.bottom-nav a').forEach((a) => {
+    if (a.getAttribute('href') === '#') return;
+    a.addEventListener('click', async (e) => {
+      if (!emSessao()) return;
+      e.preventDefault();
+      const sim = await confirmar({
+        titulo: 'Sair do cronômetro?', texto: 'O tempo desta sessão será perdido.', botao: 'Sair', perigo: true,
+      });
+      if (!sim) return;
+      saindo = true;
+      location.href = a.href;
+    });
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tick(); });
   setInterval(tick, 250);
