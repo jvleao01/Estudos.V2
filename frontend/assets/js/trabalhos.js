@@ -106,8 +106,11 @@
       const [trabalhos, provas, materias] = await Promise.all([
         apiFetch(CONFIG.trabalhos.url), apiFetch(CONFIG.provas.url), apiFetch('/api/materias'),
       ]);
+      const primeira = !estado.carregado;
       Object.assign(estado, { trabalhos, provas, materias, carregado: true });
       render();
+      // fade-up só na primeira vez; depois de cada ação a lista não reanima
+      if (primeira) animarEntrada(document.querySelectorAll('#painel > .lista-itens > .item, #painel > .concluidos'));
     } catch (e) {
       estado.carregado = false;
       renderErro(e.message);

@@ -57,7 +57,9 @@
         el('option', { value: '' }, 'Escolha a matéria'),
         ...estado.materias.map((m) => el('option', { value: m.id, selected: String(m.id) === escolhida }, m.nome)),
       );
+      const primeira = $('area').hidden;
       $('area').hidden = false;
+      if (primeira) animarEntrada(document.querySelectorAll('.crono__materia, .crono__mostrador, .crono__controles'));
       $('painel-vazio').hidden = estado.materias.length > 0;
       atualizarTela();
     } catch (e) {

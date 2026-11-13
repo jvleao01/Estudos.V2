@@ -1,4 +1,4 @@
-/* Renderização do Dashboard. Depende de: Chart.js, api.js, data.js, dashboard-utils.js */
+/* Renderização do Dashboard. Depende de: Chart.js, AOS (opcional), animacoes.js, api.js, data.js, dashboard-utils.js */
 (function () {
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const MSG_VAZIO = 'Nenhum estudo registrado nesta semana';
@@ -203,6 +203,7 @@
   window.renderDashboard = renderDashboard;
   // Espera a fonte carregar: o Chart.js mede os rótulos no momento do desenho.
   document.addEventListener('DOMContentLoaded', async () => {
+    animarEntrada(document.querySelectorAll('.dashboard > .card'));
     const fontes = document.fonts ? document.fonts.ready : Promise.resolve();
     try {
       const [data] = await Promise.all([getDashboardData(), fontes]);

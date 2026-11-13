@@ -76,8 +76,11 @@
         apiFetch('/api/materias?status=cursando'),
         apiFetch('/api/materias?status=cursada'),
       ]);
-      Object.assign(estado, { cursando, cursadas });
+      const primeira = !estado.carregado;
+      Object.assign(estado, { cursando, cursadas, carregado: true });
       render();
+      // fade-up só na primeira vez; depois de cada ação a lista não reanima
+      if (primeira) animarEntrada(document.querySelectorAll('#painel .mat-card, #painel .grupo'));
     } catch (e) {
       renderErro(e.message);
     }
