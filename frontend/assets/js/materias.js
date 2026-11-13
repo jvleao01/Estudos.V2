@@ -1,93 +1,11 @@
-/* Página Matérias. Depende de: dashboard-utils.js (formatMinutos), materias-utils.js, api.js */
+/* Página Matérias. Depende de: ui.js, dashboard-utils.js (formatMinutos), materias-utils.js, api.js */
 (function () {
   // Mesma paleta de backend/rotas/materias.py
   const PALETA = ['#6c8cff', '#2ec4b6', '#f4a261', '#e76f9a', '#b388ff',
     '#e9c46a', '#4cc9f0', '#90be6d', '#ff7b54', '#a0a7b8'];
 
-  const ICONES = {
-    relogio: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/>',
-    trabalho: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
-    calendario: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-    mais: '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',
-    editar: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
-    finalizar: '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',
-    lixo: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>',
-    livro: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
-    alerta: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
-    check: '<path d="M20 6 9 17l-5-5"/>',
-  };
-
   const estado = { aba: 'cursando', cursando: [], cursadas: [], editando: null };
   const $ = (id) => document.getElementById(id);
-
-  // ---------- helpers de DOM (todo texto entra via textContent) ----------
-  function el(tag, attrs = {}, ...filhos) {
-    const n = document.createElement(tag);
-    for (const [k, v] of Object.entries(attrs)) {
-      if (v === undefined || v === null || v === false) continue;
-      if (k === 'class') n.className = v;
-      else if (k === 'style') n.style.cssText = v;
-      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
-      else n.setAttribute(k, v === true ? '' : v);
-    }
-    for (const f of filhos) if (f !== null && f !== undefined) n.append(f);
-    return n;
-  }
-
-  function icone(nome) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'icone');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = ICONES[nome]; // constantes internas, nunca dados do usuário
-    return svg;
-  }
-
-  let toastTimer;
-  function toast(msg, erro = false) {
-    const t = $('toast');
-    t.textContent = msg;
-    t.className = `toast${erro ? ' toast--erro' : ''}`;
-    t.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
-  }
-
-  // ---------- menu de ações ----------
-  function fecharMenus(excetoBotao) {
-    document.querySelectorAll('.menu__lista').forEach((l) => {
-      const botao = l.previousElementSibling;
-      if (botao === excetoBotao) return;
-      l.remove();
-      botao.setAttribute('aria-expanded', 'false');
-    });
-  }
-
-  function menu(materia, acoes) {
-    const botao = el('button', {
-      class: 'btn-icone', type: 'button', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
-      'aria-label': `Ações de ${materia.nome}`,
-    }, icone('mais'));
-    const wrap = el('div', { class: 'menu' }, botao);
-    botao.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      fecharMenus(botao);
-      const aberto = botao.getAttribute('aria-expanded') === 'true';
-      if (aberto) { fecharMenus(); return; }
-      const lista = el('ul', { class: 'menu__lista', role: 'menu' }, ...acoes.map((a) => el('li', { role: 'none' },
-        el('button', {
-          class: `menu__item${a.perigo ? ' menu__item--perigo' : ''}`, role: 'menuitem', type: 'button',
-          onclick: () => { fecharMenus(); a.fn(materia); },
-        }, icone(a.icone), a.texto))));
-      wrap.append(lista);
-      botao.setAttribute('aria-expanded', 'true');
-      lista.querySelector('button').focus();
-    });
-    return wrap;
-  }
-
-  document.addEventListener('click', () => fecharMenus());
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharMenus(); });
 
   // ---------- render ----------
   function estadoVazio(msg, comBotao = true) {
@@ -103,7 +21,7 @@
       el('div', { class: 'mat-card__topo' },
         el('h3', { class: 'mat-card__nome' }, m.nome),
         el('span', { class: 'chip-semestre' }, m.semestre),
-        menu(m, [
+        menu(m.nome, m, [
           { texto: 'Editar', icone: 'editar', fn: abrirForm },
           { texto: 'Finalizar', icone: 'finalizar', fn: finalizar },
           { texto: 'Excluir', icone: 'lixo', perigo: true, fn: excluir },
@@ -120,7 +38,7 @@
       el('ul', { class: 'grupo__lista' }, ...g.materias.map((m) => el('li', { class: 'cursada' },
         el('span', { class: 'ponto', style: `--cor:${m.cor}` }),
         el('span', { class: 'cursada__nome' }, m.nome),
-        menu(m, [
+        menu(m.nome, m, [
           { texto: 'Editar', icone: 'editar', fn: abrirForm },
           { texto: 'Excluir', icone: 'lixo', perigo: true, fn: excluir },
         ])))))));
@@ -171,16 +89,6 @@
     history.replaceState(null, '', aba === 'cursadas' ? '#cursadas' : location.pathname);
     render();
   }
-
-  document.querySelectorAll('.aba').forEach((b) => {
-    b.addEventListener('click', () => irPara(b.dataset.aba));
-    b.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      const outra = b.dataset.aba === 'cursando' ? 'cursadas' : 'cursando';
-      irPara(outra);
-      $(`aba-${outra}`).focus();
-    });
-  });
 
   // ---------- formulário ----------
   function montarCores(corAtual, permitirAuto) {
@@ -264,23 +172,6 @@
     }
   });
 
-  document.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
-  document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => {
-    if (e.target === d) d.close(); // clique no fundo escuro fecha
-  }));
-
-  // ---------- confirmação ----------
-  function confirmar({ titulo, texto, botao, perigo }) {
-    const dlg = $('dlg-confirma');
-    $('conf-titulo').textContent = titulo;
-    $('conf-texto').textContent = texto;
-    $('conf-ok').textContent = botao;
-    $('conf-ok').className = `btn${perigo ? ' btn--perigo' : ''}`;
-    dlg.returnValue = '';
-    dlg.showModal();
-    return new Promise((ok) => dlg.addEventListener('close', () => ok(dlg.returnValue === 'sim'), { once: true }));
-  }
-
   async function finalizar(m) {
     const sim = await confirmar({
       titulo: 'Finalizar matéria?',
@@ -292,7 +183,7 @@
       await apiFetch(`/api/materias/${m.id}`, { method: 'PATCH', body: { status: 'cursada' } });
       toast('Matéria finalizada.');
       await carregar();
-    } catch (e) { toast(e.message, true); }
+    } catch (e) { toast(e.message, { erro: true }); }
   }
 
   async function excluir(m) {
@@ -307,10 +198,12 @@
       await apiFetch(`/api/materias/${m.id}`, { method: 'DELETE' });
       toast('Matéria excluída.');
       await carregar();
-    } catch (e) { toast(e.message, true); }
+    } catch (e) { toast(e.message, { erro: true }); }
   }
 
   // ---------- início ----------
+  ligarAbas(['cursando', 'cursadas'], irPara);
+  ligarDialogs();
   $('btn-adicionar').addEventListener('click', () => abrirForm());
   $('semestre-label').textContent = `Semestre ${semestreAtual(new Date())}`;
   estado.aba = location.hash === '#cursadas' ? 'cursadas' : 'cursando';
