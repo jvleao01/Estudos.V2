@@ -1,0 +1,84 @@
+/* Página Trabalhos e Provas — depende de componentes.css */
+
+/* ---------- Itens ---------- */
+.lista-itens { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.item {
+  padding: 14px 14px 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: inset 5px 0 0 var(--cor);
+}
+.item__topo { display: flex; align-items: flex-start; gap: 8px; }
+.item__titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.item__linha { margin-top: 4px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.item__rodape { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+
+.selo {
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.selo--urgente { background: rgba(255, 107, 107, 0.14); color: var(--danger); }
+
+.item__acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.item__acao .icone { width: 16px; height: 16px; color: var(--accent); }
+.item__acao:hover { background: var(--surface-2); }
+.item__acao:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Concluídos ---------- */
+.concluidos { margin-top: 20px; }
+.concluidos summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.concluidos summary::-webkit-details-marker { display: none; }
+.concluidos summary::before { content: ""; width: 7px; height: 7px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform 150ms; }
+.concluidos[open] summary::before { transform: rotate(45deg); }
+.concluidos summary:focus-visible { outline: 2px solid var(--accent); border-radius: 8px; }
+.concluidos .lista-itens { margin-top: 8px; }
+.item--feito { padding-top: 10px; padding-bottom: 10px; opacity: 0.7; }
+.item--feito .item__titulo { font-size: 15px; font-weight: 500; text-decoration: line-through; text-decoration-color: var(--muted); }
+
+/* ---------- Formulário ---------- */
+.campo select,
+.campo input[type="date"] {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* evita zoom no iOS */
+  color-scheme: dark;
+}
+.campo select:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
