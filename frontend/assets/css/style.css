@@ -213,7 +213,8 @@ h1, h2, p { margin: 0; }
 /* ---------- Desktop ---------- */
 @media (min-width: 900px) {
   /* Menu lateral: recolhido só com ícones; abre por cima do conteúdo (hover ou foco do teclado). */
-  :root { --lateral: 76px; --lateral-aberta: 228px; }
+  /* --nav-h: 0 porque no computador não há barra embaixo (o espaço reservado para ela some) */
+  :root { --lateral: 76px; --lateral-aberta: 228px; --nav-h: 0px; }
   body { padding-left: var(--lateral); }
   .bottom-nav {
     inset: 0 auto 0 0;

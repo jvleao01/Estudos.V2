@@ -250,3 +250,10 @@
 }
 .toast__acao:hover { background: var(--surface); }
 .toast__acao:focus-visible { outline: 2px solid var(--accent); }
+
+/* ---------- Computador: conteúdo centralizado à direita do menu lateral ---------- */
+@media (min-width: 900px) {
+  /* alinhado à borda direita dos cards (.pagina: 760px de largura, 16px de respiro) */
+  .fab { right: max(16px, calc(50% - var(--lateral) / 2 - 364px)); }
+  .toast { left: calc(50% + var(--lateral) / 2); }
+}
