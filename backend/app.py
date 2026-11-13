@@ -19,12 +19,14 @@ def create_app():
     from rotas.materias import bp as materias_bp
     from rotas.provas import bp as provas_bp
     from rotas.sessoes import bp as sessoes_bp
+    from rotas.dashboard import bp as dashboard_bp
     from rotas.trabalhos import bp as trabalhos_bp
 
     app.register_blueprint(materias_bp)
     app.register_blueprint(trabalhos_bp)
     app.register_blueprint(provas_bp)
     app.register_blueprint(sessoes_bp)
+    app.register_blueprint(dashboard_bp)
 
     @app.errorhandler(BancoIndisponivel)
     def banco_indisponivel(_e):
