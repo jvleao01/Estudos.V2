@@ -1,5 +1,7 @@
 -- Estrutura do banco. Rode uma vez (phpMyAdmin > Importar, ou:
---   c:\xampp\mysql\bin\mysql -uroot -P8000 < backend\sql\bd.sql)
+--   c:\xampp\mysql\bin\mysql -uroot -h127.0.0.1 -P8000 < backend\sql\bd.sql)
+
+SET NAMES utf8mb4;
 
 CREATE DATABASE IF NOT EXISTS `estudos` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `estudos`;

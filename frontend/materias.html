@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1117">
+  <title>Estudos · Matérias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assetes/css/style.css">
+  <link rel="stylesheet" href="assetes/css/materias.css">
+</head>
+<body>
+  <main class="pagina">
+    <header class="topo">
+      <div>
+        <p class="topo__sub" id="semestre-label">Semestre</p>
+        <h1 class="topo__titulo">Matérias</h1>
+      </div>
+    </header>
+
+    <div class="abas" role="tablist" aria-label="Situação das matérias">
+      <button class="aba" role="tab" id="aba-cursando" aria-controls="painel" data-aba="cursando">
+        Cursando <span class="aba__contador" id="cont-cursando">0</span>
+      </button>
+      <button class="aba" role="tab" id="aba-cursadas" aria-controls="painel" data-aba="cursadas">
+        Já cursadas <span class="aba__contador" id="cont-cursadas">0</span>
+      </button>
+    </div>
+
+    <section id="painel" role="tabpanel" aria-live="polite"></section>
+  </main>
+
+  <button class="fab" id="btn-adicionar" aria-label="Adicionar matéria">
+    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <!-- Formulário (adicionar / editar) -->
+  <dialog class="sheet" id="dlg-form" aria-labelledby="form-titulo">
+    <form id="form-materia" novalidate>
+      <div class="sheet__alca" aria-hidden="true"></div>
+      <h2 id="form-titulo">Nova matéria</h2>
+
+      <label class="campo">
+        <span>Nome</span>
+        <input name="nome" maxlength="80" required autocomplete="off" placeholder="Ex.: Cálculo II">
+      </label>
+
+      <label class="campo">
+        <span>Semestre</span>
+        <input name="semestre" required inputmode="decimal" placeholder="2026.2" pattern="\d{4}\.[12]">
+      </label>
+
+      <fieldset class="campo" id="campo-status" hidden>
+        <legend>Situação</legend>
+        <div class="segmentado">
+          <label><input type="radio" name="status" value="cursando"><span>Cursando</span></label>
+          <label><input type="radio" name="status" value="cursada"><span>Já cursada</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="campo">
+        <legend>Cor</legend>
+        <div class="cores" id="cores"></div>
+      </fieldset>
+
+      <p class="form-erro" id="form-erro" role="alert" hidden></p>
+
+      <div class="sheet__acoes">
+        <button type="button" class="btn btn--sec" data-fechar>Cancelar</button>
+        <button type="submit" class="btn" id="btn-salvar">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirmação -->
+  <dialog class="sheet sheet--confirma" id="dlg-confirma" aria-labelledby="conf-titulo">
+    <form method="dialog">
+      <h2 id="conf-titulo">Confirmar</h2>
+      <p id="conf-texto"></p>
+      <div class="sheet__acoes">
+        <button value="nao" class="btn btn--sec">Cancelar</button>
+        <button value="sim" class="btn" id="conf-ok">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <nav class="bottom-nav" aria-label="Navegação principal">
+    <a href="index.html" class="bottom-nav__item">
+      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+      <span>Início</span>
+    </a>
+    <a href="materias.html" class="bottom-nav__item ativo" aria-current="page">
+      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Matérias</span>
+    </a>
+    <a href="#" class="bottom-nav__item">
+      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+      <span>Trabalhos</span>
+    </a>
+    <a href="#" class="bottom-nav__item">
+      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      <span>Notas</span>
+    </a>
+    <a href="#" class="bottom-nav__item">
+      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/></svg>
+      <span>Cronômetro</span>
+    </a>
+    <a href="#" class="bottom-nav__item">
+      <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Calendário</span>
+    </a>
+  </nav>
+
+  <script src="assetes/js/dashboard-utils.js"></script>
+  <script src="assetes/js/materias-utils.js"></script>
+  <script src="assetes/js/api.js"></script>
+  <script src="assetes/js/materias.js"></script>
+</body>
+</html>
