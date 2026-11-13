@@ -5,7 +5,7 @@ def test_index_servido(client):
 
 
 def test_estatico_css(client):
-    r = client.get("/assetes/css/style.css")
+    r = client.get("/assets/css/style.css")
     assert r.status_code == 200
 
 

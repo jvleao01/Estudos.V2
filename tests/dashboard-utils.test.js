@@ -2,8 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert');
 const {
   formatMinutos, rankMaterias, proximasProvas, rotuloDias, totalMinutos,
-} = require('../frontend/assetes/js/dashboard-utils.js');
-const { getDashboardData } = require('../frontend/assetes/js/data.js');
+} = require('../frontend/assets/js/dashboard-utils.js');
+const { getDashboardData } = require('../frontend/assets/js/data.js');
 
 test('formatMinutos', () => {
   assert.strictEqual(formatMinutos(0), '0min');

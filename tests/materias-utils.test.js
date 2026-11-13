@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const {
   semestreAtual, agruparPorSemestre, formatarDataCurta, rotuloTrabalhos,
-} = require('../frontend/assetes/js/materias-utils.js');
+} = require('../frontend/assets/js/materias-utils.js');
 
 test('semestreAtual', () => {
   assert.strictEqual(semestreAtual(new Date(2026, 0, 1)), '2026.1');
