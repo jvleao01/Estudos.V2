@@ -138,3 +138,14 @@ def test_delete_remove_dependentes(client, db):
     with db.cursor() as cur:
         cur.execute("SELECT COUNT(*) AS n FROM provas")
         assert cur.fetchone()[0] == 0
+
+
+def test_prova_feita_nao_aparece_nos_cards(client):
+    mid = criar(client).get_json()["id"]
+    amanha = (date.today() + timedelta(days=1)).isoformat()
+    depois = (date.today() + timedelta(days=2)).isoformat()
+    feita = client.post("/api/provas", json={"materiaId": mid, "titulo": "P1", "data": amanha}).get_json()
+    client.post("/api/provas", json={"materiaId": mid, "titulo": "P2", "data": depois})
+    client.patch(f"/api/provas/{feita['id']}", json={"concluido": True})
+    m = client.get(URL).get_json()[0]
+    assert m["provas"] == [{"titulo": "P2", "data": depois}]

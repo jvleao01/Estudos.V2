@@ -75,7 +75,7 @@ def buscar(cur, where="", params=()):
     marcadores = ",".join(["%s"] * len(ids))
     cur.execute(
         f"SELECT materia_id, titulo, data FROM provas "
-        f"WHERE materia_id IN ({marcadores}) AND data >= CURDATE() ORDER BY data, id",
+        f"WHERE materia_id IN ({marcadores}) AND data >= CURDATE() AND NOT concluido ORDER BY data, id",
         ids,
     )
     provas = {}
