@@ -5,6 +5,7 @@ import pymysql
 from flask import Blueprint, jsonify, request
 
 from conexao.conexao import get_conexao
+from rotas.validacao import ErroValidacao, erro
 
 bp = Blueprint("materias", __name__, url_prefix="/api/materias")
 
@@ -25,14 +26,6 @@ FROM materias m
 {where}
 ORDER BY m.status = 'cursada', IF(m.status = 'cursada', m.semestre, '') DESC, m.nome
 """
-
-
-class ErroValidacao(Exception):
-    pass
-
-
-def erro(msg, status):
-    return jsonify(erro=msg), status
 
 
 def validar(dados, parcial=False):
