@@ -106,3 +106,13 @@ test('textoSituacao', () => {
   assert.deepStrictEqual(textoSituacao({ configurada: true, situacao: 'impossivel', falta: 40 }), { texto: 'Não dá mais', classe: 'perigo' });
   assert.strictEqual(textoSituacao({ configurada: false, situacao: null, falta: null }), null);
 });
+
+test('rotuloPontos: singular abaixo de 2', () => {
+  const { rotuloPontos } = require('../frontend/assets/js/notas-utils.js');
+  assert.strictEqual(rotuloPontos(0), '0 pontos');
+  assert.strictEqual(rotuloPontos(0.5), '0,5 ponto');
+  assert.strictEqual(rotuloPontos(1), '1 ponto');
+  assert.strictEqual(rotuloPontos(1.5), '1,5 ponto');
+  assert.strictEqual(rotuloPontos(2), '2 pontos');
+  assert.strictEqual(rotuloPontos(42), '42 pontos');
+});

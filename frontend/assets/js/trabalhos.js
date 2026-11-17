@@ -117,11 +117,24 @@
       Object.assign(estado, { trabalhos, provas, materias, carregado: true });
       render();
       // fade-up só na primeira vez; depois de cada ação a lista não reanima
-      if (primeira) animarEntrada(document.querySelectorAll('#painel > .lista-itens > .item, #painel > .concluidos'));
+      if (primeira) {
+        animarEntrada(document.querySelectorAll('#painel > .lista-itens > .item, #painel > .concluidos'));
+        abrirEdicaoDaUrl();
+      }
     } catch (e) {
       estado.carregado = false;
       renderErro(e.message);
     }
+  }
+
+  // trabalhos.html?editar=ID[#provas] (vem do "Sem valor" da página Notas): abre a edição do item.
+  function abrirEdicaoDaUrl() {
+    const id = Number(new URLSearchParams(location.search).get('editar'));
+    if (!id) return;
+    history.replaceState(null, '', location.pathname + location.hash); // não reabre ao recarregar
+    const item = estado[estado.aba].find((i) => i.id === id);
+    if (item) abrirForm(item);
+    else toast('Item não encontrado.', { erro: true });
   }
 
   function irPara(aba) {

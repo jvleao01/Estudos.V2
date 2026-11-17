@@ -167,3 +167,11 @@ def test_criar_com_simulado(client):
     assert client.patch(f"{URL}/{s['id']}", json={"simulado": False}).get_json()["simulado"] is False
     r = client.patch(f"{URL}/{s['id']}", json={"simulado": "sim"})
     assert (r.status_code, r.get_json()) == (400, {"erro": "O campo simulado deve ser verdadeiro ou falso."})
+
+
+def test_valor_menor_em_item_desmarcado_descarta_nota_guardada(client):
+    p = concluido_com_nota(client)
+    client.patch(f"{URL}/{p['id']}", json={"concluido": False})
+    r = client.patch(f"{URL}/{p['id']}", json={"valor": 20})
+    assert r.status_code == 200
+    assert (r.get_json()["valor"], r.get_json()["nota"]) == (20.0, None)

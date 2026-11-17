@@ -230,3 +230,11 @@ def test_trabalho_ignora_simulado(client):
     r = client.post(URL, json={"valor": 10, "simulado": True, "materiaId": materia(client), "titulo": "L", "entrega": dia(3)})
     assert r.status_code == 201
     assert "simulado" not in r.get_json()
+
+
+def test_valor_menor_em_item_desmarcado_descarta_nota_guardada(client):
+    p = concluido_com_nota(client)
+    client.patch(f"{URL}/{p['id']}", json={"concluido": False})
+    r = client.patch(f"{URL}/{p['id']}", json={"valor": 20})
+    assert r.status_code == 200
+    assert (r.get_json()["valor"], r.get_json()["nota"]) == (20.0, None)

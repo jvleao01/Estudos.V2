@@ -108,6 +108,10 @@ def checar_nota(atual, dados):
         if nota > Decimal(str(valor)):
             raise ErroValidacao(f"A nota não pode passar do valor ({fmt_pontos(Decimal(str(valor)))}).")
     elif nota > dados["valor"]:
+        if not concluido:
+            # Nota guardada de item desmarcado não aparece em nenhuma tela: descarta em vez de bloquear.
+            dados["nota"] = None
+            return
         raise ErroValidacao(f"O valor não pode ser menor que a nota já lançada ({fmt_pontos(nota)}).")
 
 

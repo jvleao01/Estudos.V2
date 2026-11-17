@@ -41,15 +41,20 @@
     return String(p(d(n))).replace('.', ',');
   }
 
+  // "0,5 ponto", "1 ponto", "2 pontos" (singular entre 0 e 2, como no português do Brasil)
+  function rotuloPontos(n) {
+    return `${formatarPontos(n)} ${n > 0 && n < 2 ? 'ponto' : 'pontos'}`;
+  }
+
   function textoSituacao(resumo) {
     if (!resumo.configurada) return null;
     if (resumo.situacao === 'aprovado') return { texto: 'Aprovado', classe: 'ok' };
     if (resumo.situacao === 'impossivel') return { texto: 'Não dá mais', classe: 'perigo' };
-    const n = formatarPontos(resumo.falta);
-    return { texto: resumo.falta < 2 ? `Falta ${n} ponto` : `Faltam ${n} pontos`, classe: 'neutro' };
+    const verbo = resumo.falta < 2 ? 'Falta' : 'Faltam';
+    return { texto: `${verbo} ${rotuloPontos(resumo.falta)}`, classe: 'neutro' };
   }
 
-  const api = { resumoMateria, formatarPontos, textoSituacao };
+  const api = { resumoMateria, formatarPontos, rotuloPontos, textoSituacao };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

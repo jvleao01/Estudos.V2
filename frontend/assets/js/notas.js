@@ -7,7 +7,7 @@
 
   // ---------- render ----------
   function linhaPontos(m, r) {
-    const partes = [el('strong', {}, `${pts(r.obtidos)} pontos`)];
+    const partes = [el('strong', {}, rotuloPontos(r.obtidos))];
     if (r.bonus > 0) {
       partes.push(el('span', { class: 'nota-bonus' }, ` + ${pts(r.bonus)} bônus`));
       partes.push(el('strong', {}, ` = ${pts(r.final)}`));
@@ -33,9 +33,16 @@
     const vale = i.valor === null ? null : el('span', { class: 'nota-item__vale' }, `vale ${pts(i.valor)}`);
     let direita;
     if (i.valor === null) {
-      direita = el('a', { class: 'nota-item__link', href: i.tipo === 'prova' ? 'trabalhos.html#provas' : 'trabalhos.html' }, 'Sem valor');
+      // abre a edição do item em Trabalhos e Provas
+      const aba = i.tipo === 'prova' ? '#provas' : '';
+      direita = el('a', {
+        class: 'nota-item__link', href: `trabalhos.html?editar=${i.id}${aba}`,
+        'aria-label': `Sem valor: definir o valor de ${i.titulo}`,
+      }, 'Sem valor');
     } else if (i.nota === null) {
-      direita = el('button', { class: 'item__acao', type: 'button', onclick: () => abrirNota(i) }, 'Lançar nota');
+      direita = el('button', {
+        class: 'item__acao', type: 'button', onclick: () => abrirNota(i), 'aria-label': `Lançar nota de ${i.titulo}`,
+      }, 'Lançar nota');
     } else {
       direita = el('button', {
         class: 'nota-item__nota', type: 'button', onclick: () => abrirNota(i),
@@ -59,7 +66,7 @@
     ];
     if (r.configurada) {
       filhos.push(linhaPontos(m, r), barra(m, r),
-        el('p', { class: 'nota-card__jogo' }, `Em jogo: ${pts(r.emJogo)} ${r.emJogo === 1 ? 'ponto' : 'pontos'}`));
+        el('p', { class: 'nota-card__jogo' }, `Em jogo: ${rotuloPontos(r.emJogo)}`));
       if (r.excedeTotal) {
         filhos.push(el('p', { class: 'nota-aviso' }, icone('alerta'),
           `Os valores somam ${pts(r.distribuidos)}, mais que o total de ${pts(m.notaTotal)}.`));
@@ -121,8 +128,9 @@
   async function salvarNota(nota) {
     const item = estado.item;
     const dlg = $('dlg-nota');
+    const botoes = [$('btn-salvar-nota'), $('btn-remover-nota')];
     dlg.setAttribute('data-travado', '');
-    $('btn-salvar-nota').disabled = true;
+    botoes.forEach((b) => { b.disabled = true; });
     try {
       await apiFetch(`${URL_TIPO[item.tipo]}/${item.id}`, { method: 'PATCH', body: { nota } });
       dlg.removeAttribute('data-travado');
@@ -132,9 +140,11 @@
     } catch (err) {
       $('nota-erro').textContent = err.message;
       $('nota-erro').hidden = false;
+      // o item pode ter mudado em outra aba (apagado, desmarcado): atualiza os cards por trás da folha
+      carregar();
     } finally {
       dlg.removeAttribute('data-travado');
-      $('btn-salvar-nota').disabled = false;
+      botoes.forEach((b) => { b.disabled = false; });
     }
   }
 
