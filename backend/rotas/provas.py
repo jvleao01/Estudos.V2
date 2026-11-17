@@ -2,13 +2,13 @@
 from flask import Blueprint, jsonify, request
 
 from conexao.conexao import get_conexao
-from rotas.validacao import ErroValidacao, erro, materia_existe, validar_item
+from rotas.validacao import ErroValidacao, checar_nota, erro, materia_existe, pontos_json, validar_item
 
 bp = Blueprint("provas", __name__, url_prefix="/api/provas")
 
 # Pendentes primeiro, do prazo mais próximo (as que já passaram no topo); depois as feitas, do mais recente.
 SQL_LISTA = """
-SELECT t.id, t.materia_id, m.nome AS materia_nome, m.cor AS materia_cor, t.titulo, t.data, t.concluido
+SELECT t.id, t.materia_id, m.nome AS materia_nome, m.cor AS materia_cor, t.titulo, t.data, t.concluido, t.valor, t.nota, t.simulado
 FROM provas t JOIN materias m ON m.id = t.materia_id
 {where}
 ORDER BY t.concluido,
@@ -26,6 +26,9 @@ def formatar(linha):
         "titulo": linha["titulo"],
         "data": linha["data"].isoformat(),
         "concluido": bool(linha["concluido"]),
+        "valor": pontos_json(linha["valor"]),
+        "nota": pontos_json(linha["nota"]),
+        "simulado": bool(linha["simulado"]),
     }
 
 
@@ -52,23 +55,25 @@ def listar():
 
 @bp.post("")
 def criar():
-    dados = validar_item(request.get_json(silent=True), "data")
+    dados = validar_item(request.get_json(silent=True), "data", aceita_simulado=True)
     with get_conexao() as con, con.cursor() as cur:
         if not materia_existe(cur, dados["materia_id"]):
             raise ErroValidacao("Matéria não encontrada.")
         cur.execute(
-            "INSERT INTO provas (materia_id, titulo, data) VALUES (%s, %s, %s)",
-            (dados["materia_id"], dados["titulo"], dados["data"]),
+            "INSERT INTO provas (materia_id, titulo, data, valor, simulado) VALUES (%s, %s, %s, %s, %s)",
+            (dados["materia_id"], dados["titulo"], dados["data"], dados["valor"], dados.get("simulado", False)),
         )
         return jsonify(buscar_um(cur, cur.lastrowid)), 201
 
 
 @bp.patch("/<int:tid>")
 def editar(tid):
-    dados = validar_item(request.get_json(silent=True), "data", parcial=True)
+    dados = validar_item(request.get_json(silent=True), "data", parcial=True, aceita_simulado=True)
     with get_conexao() as con, con.cursor() as cur:
-        if buscar_um(cur, tid) is None:
+        atual = buscar_um(cur, tid)
+        if atual is None:
             return erro("Prova não encontrada.", 404)
+        checar_nota(atual, dados)
         if "materia_id" in dados and not materia_existe(cur, dados["materia_id"]):
             raise ErroValidacao("Matéria não encontrada.")
         if dados:

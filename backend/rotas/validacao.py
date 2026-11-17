@@ -54,7 +54,7 @@ def fmt_pontos(d):
     return str(int(d)) if d == d.to_integral_value() else str(d).replace(".", ",")
 
 
-def validar_item(dados, campo_data, parcial=False):
+def validar_item(dados, campo_data, parcial=False, aceita_simulado=False):
     """Valida um trabalho ou prova. Devolve só os campos válidos, já com os nomes das colunas."""
     if not isinstance(dados, dict):
         raise ErroValidacao("Envie os dados em JSON.")
@@ -76,7 +76,39 @@ def validar_item(dados, campo_data, parcial=False):
         if not isinstance(dados["concluido"], bool):
             raise ErroValidacao("O campo concluído deve ser verdadeiro ou falso.")
         limpo["concluido"] = dados["concluido"]
+    if "valor" in dados or not parcial:
+        limpo["valor"] = validar_pontos(dados.get("valor"), "O valor", positivo=True)
+    if "nota" in dados:
+        if not parcial:
+            raise ErroValidacao("A nota só pode ser lançada depois de concluir.")
+        nota = dados["nota"]
+        limpo["nota"] = None if nota is None else validar_pontos(nota, "A nota")
+    if aceita_simulado and "simulado" in dados:
+        if not isinstance(dados["simulado"], bool):
+            raise ErroValidacao("O campo simulado deve ser verdadeiro ou falso.")
+        limpo["simulado"] = dados["simulado"]
     return limpo
+
+
+def checar_nota(atual, dados):
+    """Regras da nota para um PATCH. atual = item formatado; dados = colunas já validadas."""
+    if "nota" not in dados and "valor" not in dados:
+        return
+    nota = dados["nota"] if "nota" in dados else atual["nota"]
+    if nota is None:
+        return
+    nota = Decimal(str(nota))
+    valor = dados["valor"] if "valor" in dados else atual["valor"]
+    concluido = dados.get("concluido", atual["concluido"])
+    if "nota" in dados:
+        if not concluido:
+            raise ErroValidacao("Só é possível lançar nota depois de concluir.")
+        if valor is None:
+            raise ErroValidacao("Defina o valor antes de lançar a nota.")
+        if nota > Decimal(str(valor)):
+            raise ErroValidacao(f"A nota não pode passar do valor ({fmt_pontos(Decimal(str(valor)))}).")
+    elif nota > dados["valor"]:
+        raise ErroValidacao(f"O valor não pode ser menor que a nota já lançada ({fmt_pontos(nota)}).")
 
 
 def materia_existe(cur, materia_id):

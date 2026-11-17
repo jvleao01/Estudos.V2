@@ -15,12 +15,12 @@ def materia(client, nome="Cálculo"):
 
 
 def criar(client, mid, titulo="Lista", entrega=None):
-    return client.post(URL, json={"materiaId": mid, "titulo": titulo, "entrega": entrega or dia(5)})
+    return client.post(URL, json={"valor": 30, "materiaId": mid, "titulo": titulo, "entrega": entrega or dia(5)})
 
 
 def test_criar_e_listar(client):
     mid = materia(client)
-    r = client.post(URL, json={"materiaId": mid, "titulo": "  Lista 3  ", "entrega": "2026-12-01"})
+    r = client.post(URL, json={"valor": 30, "materiaId": mid, "titulo": "  Lista 3  ", "entrega": "2026-12-01"})
     assert r.status_code == 201
     t = r.get_json()
     assert t["id"] > 0
@@ -93,7 +93,7 @@ MSG_MATERIA = "Matéria inválida."
     ],
 )
 def test_validacao(client, campos, msg):
-    dados = {"materiaId": materia(client), "titulo": "Lista", "entrega": dia(3)}
+    dados = {"valor": 30, "materiaId": materia(client), "titulo": "Lista", "entrega": dia(3)}
     dados.update(campos)
     dados = {k: v for k, v in dados.items() if v is not None}
     r = client.post(URL, json=dados)
@@ -108,7 +108,7 @@ def test_sem_json(client):
 
 
 def test_materia_inexistente(client):
-    r = client.post(URL, json={"materiaId": 9999, "titulo": "Lista", "entrega": dia(3)})
+    r = client.post(URL, json={"valor": 30, "materiaId": 9999, "titulo": "Lista", "entrega": dia(3)})
     assert r.status_code == 400
     assert r.get_json() == {"erro": "Matéria não encontrada."}
     t = criar(client, materia(client)).get_json()
@@ -131,3 +131,102 @@ def test_trabalho_conta_nos_cards_de_materias(client):
     criar(client, mid)
     m = client.get("/api/materias").get_json()[0]
     assert (m["id"], m["trabalhos"], m["trabalhosPendentes"]) == (mid, 1, 1)
+
+
+# ---------- valor e nota ----------
+
+def concluido_com_nota(client, nota=25):
+    p = criar(client, materia(client)).get_json()
+    return client.patch(f"{URL}/{p['id']}", json={"concluido": True, "nota": nota}).get_json()
+
+
+def test_valor_volta_como_numero(client):
+    p = criar(client, materia(client)).get_json()
+    assert p["valor"] == 30.0 and isinstance(p["valor"], float)
+    assert p["nota"] is None
+
+
+def test_valor_obrigatorio(client):
+    r = client.post(URL, json={"materiaId": materia(client), "titulo": "X", "entrega": dia(3)})
+    assert (r.status_code, r.get_json()) == (
+        400, {"erro": "O valor deve ser um número de 0 a 9999,9 com até 1 casa decimal."})
+    r = client.post(URL, json={"valor": 0, "materiaId": materia(client, "B"), "titulo": "X", "entrega": dia(3)})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "O valor deve ser maior que zero."})
+
+
+def test_nota_no_post_recusada(client):
+    r = client.post(URL, json={"valor": 30, "nota": 10, "materiaId": materia(client), "titulo": "X", "entrega": dia(3)})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "A nota só pode ser lançada depois de concluir."})
+
+
+def test_nota_em_item_pendente_recusada(client):
+    p = criar(client, materia(client)).get_json()
+    r = client.patch(f"{URL}/{p['id']}", json={"nota": 10})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Só é possível lançar nota depois de concluir."})
+
+
+def test_lancar_nota_depois_de_concluir(client):
+    p = criar(client, materia(client)).get_json()
+    client.patch(f"{URL}/{p['id']}", json={"concluido": True})
+    r = client.patch(f"{URL}/{p['id']}", json={"nota": 25.5})
+    assert r.status_code == 200
+    assert r.get_json()["nota"] == 25.5
+
+
+def test_concluir_e_lancar_no_mesmo_patch(client):
+    assert concluido_com_nota(client, 20)["nota"] == 20.0
+
+
+def test_desmarcar_com_nota_lancada(client):
+    p = concluido_com_nota(client)
+    r = client.patch(f"{URL}/{p['id']}", json={"concluido": False})
+    assert r.status_code == 200
+    assert (r.get_json()["concluido"], r.get_json()["nota"]) == (False, 25.0)
+
+
+def test_desmarcar_e_lancar_juntos_recusado(client):
+    p = concluido_com_nota(client)
+    r = client.patch(f"{URL}/{p['id']}", json={"concluido": False, "nota": 5})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Só é possível lançar nota depois de concluir."})
+
+
+def test_nota_acima_do_valor(client):
+    p = criar(client, materia(client)).get_json()
+    r = client.patch(f"{URL}/{p['id']}", json={"concluido": True, "nota": 30.5})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "A nota não pode passar do valor (30)."})
+
+
+def test_nota_invalida(client):
+    p = criar(client, materia(client)).get_json()
+    r = client.patch(f"{URL}/{p['id']}", json={"concluido": True, "nota": 7.55})
+    assert (r.status_code, r.get_json()) == (
+        400, {"erro": "A nota deve ser um número de 0 a 9999,9 com até 1 casa decimal."})
+
+
+def test_apagar_nota(client):
+    p = concluido_com_nota(client)
+    assert client.patch(f"{URL}/{p['id']}", json={"nota": None}).get_json()["nota"] is None
+    pendente = criar(client, p["materiaId"], "Outro").get_json()
+    assert client.patch(f"{URL}/{pendente['id']}", json={"nota": None}).status_code == 200
+
+
+def test_valor_menor_que_nota(client):
+    p = concluido_com_nota(client)
+    r = client.patch(f"{URL}/{p['id']}", json={"valor": 20})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "O valor não pode ser menor que a nota já lançada (25)."})
+    assert client.patch(f"{URL}/{p['id']}", json={"valor": 25}).get_json()["valor"] == 25.0
+
+
+def test_nota_em_item_antigo_sem_valor(client, db):
+    p = criar(client, materia(client)).get_json()
+    with db.cursor() as cur:
+        cur.execute("UPDATE trabalhos SET valor = NULL WHERE id = %s", (p["id"],))
+    r = client.patch(f"{URL}/{p['id']}", json={"concluido": True, "nota": 5})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Defina o valor antes de lançar a nota."})
+    assert client.patch(f"{URL}/{p['id']}", json={"titulo": "Novo"}).status_code == 200
+
+
+def test_trabalho_ignora_simulado(client):
+    r = client.post(URL, json={"valor": 10, "simulado": True, "materiaId": materia(client), "titulo": "L", "entrega": dia(3)})
+    assert r.status_code == 201
+    assert "simulado" not in r.get_json()

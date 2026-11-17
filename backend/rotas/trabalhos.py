@@ -2,13 +2,13 @@
 from flask import Blueprint, jsonify, request
 
 from conexao.conexao import get_conexao
-from rotas.validacao import ErroValidacao, erro, materia_existe, validar_item
+from rotas.validacao import ErroValidacao, checar_nota, erro, materia_existe, pontos_json, validar_item
 
 bp = Blueprint("trabalhos", __name__, url_prefix="/api/trabalhos")
 
 # Pendentes primeiro, do prazo mais próximo (atrasados no topo); depois os entregues, do mais recente.
 SQL_LISTA = """
-SELECT t.id, t.materia_id, m.nome AS materia_nome, m.cor AS materia_cor, t.titulo, t.entrega, t.concluido
+SELECT t.id, t.materia_id, m.nome AS materia_nome, m.cor AS materia_cor, t.titulo, t.entrega, t.concluido, t.valor, t.nota
 FROM trabalhos t JOIN materias m ON m.id = t.materia_id
 {where}
 ORDER BY t.concluido,
@@ -26,6 +26,8 @@ def formatar(linha):
         "titulo": linha["titulo"],
         "entrega": linha["entrega"].isoformat(),
         "concluido": bool(linha["concluido"]),
+        "valor": pontos_json(linha["valor"]),
+        "nota": pontos_json(linha["nota"]),
     }
 
 
@@ -57,8 +59,8 @@ def criar():
         if not materia_existe(cur, dados["materia_id"]):
             raise ErroValidacao("Matéria não encontrada.")
         cur.execute(
-            "INSERT INTO trabalhos (materia_id, titulo, entrega) VALUES (%s, %s, %s)",
-            (dados["materia_id"], dados["titulo"], dados["entrega"]),
+            "INSERT INTO trabalhos (materia_id, titulo, entrega, valor) VALUES (%s, %s, %s, %s)",
+            (dados["materia_id"], dados["titulo"], dados["entrega"], dados["valor"]),
         )
         return jsonify(buscar_um(cur, cur.lastrowid)), 201
 
@@ -67,8 +69,10 @@ def criar():
 def editar(tid):
     dados = validar_item(request.get_json(silent=True), "entrega", parcial=True)
     with get_conexao() as con, con.cursor() as cur:
-        if buscar_um(cur, tid) is None:
+        atual = buscar_um(cur, tid)
+        if atual is None:
             return erro("Trabalho não encontrado.", 404)
+        checar_nota(atual, dados)
         if "materia_id" in dados and not materia_existe(cur, dados["materia_id"]):
             raise ErroValidacao("Matéria não encontrada.")
         if dados:

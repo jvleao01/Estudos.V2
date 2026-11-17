@@ -16,7 +16,7 @@ def sessao(client, mid, inicio, minutos):
 
 
 def prova(client, mid, titulo, data, feita=False):
-    p = client.post("/api/provas", json={"materiaId": mid, "titulo": titulo, "data": data}).get_json()
+    p = client.post("/api/provas", json={"valor": 30, "materiaId": mid, "titulo": titulo, "data": data}).get_json()
     if feita:
         client.patch(f"/api/provas/{p['id']}", json={"concluido": True})
 
