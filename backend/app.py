@@ -17,6 +17,7 @@ def create_app():
     app.json.sort_keys = False
 
     from rotas.materias import bp as materias_bp
+    from rotas.notas import bp as notas_bp
     from rotas.provas import bp as provas_bp
     from rotas.sessoes import bp as sessoes_bp
     from rotas.dashboard import bp as dashboard_bp
@@ -27,6 +28,7 @@ def create_app():
     app.register_blueprint(provas_bp)
     app.register_blueprint(sessoes_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(notas_bp)
 
     @app.errorhandler(BancoIndisponivel)
     def banco_indisponivel(_e):
