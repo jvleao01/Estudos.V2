@@ -6,7 +6,7 @@ DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 
 
 def materia(client, nome, cor="#6c8cff"):
-    r = client.post("/api/materias", json={"nome": nome, "semestre": "2026.2", "cor": cor, "status": "cursando"})
+    r = client.post("/api/materias", json={"nome": nome, "semestre": "2026.2", "cor": cor, "status": "cursando", "notaMinima": 60, "notaTotal": 100})
     return r.get_json()["id"]
 
 

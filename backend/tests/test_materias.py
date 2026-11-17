@@ -6,7 +6,7 @@ URL = "/api/materias"
 
 
 def criar(client, **campos):
-    dados = {"nome": "Cálculo", "semestre": "2026.2", "cor": "#6c8cff", "status": "cursando"}
+    dados = {"nome": "Cálculo", "semestre": "2026.2", "cor": "#6c8cff", "status": "cursando", "notaMinima": 60, "notaTotal": 100}
     dados.update(campos)
     return client.post(URL, json=dados)
 
@@ -149,3 +149,67 @@ def test_prova_feita_nao_aparece_nos_cards(client):
     client.patch(f"/api/provas/{feita['id']}", json={"concluido": True})
     m = client.get(URL).get_json()[0]
     assert m["provas"] == [{"titulo": "P2", "data": depois}]
+
+
+MSG_TOTAL = "O total de pontos deve ser um número de 0 a 9999,9 com até 1 casa decimal."
+MSG_MIN_TOTAL = "A nota mínima não pode passar do total."
+
+
+def test_criar_com_minimo_e_total(client):
+    r = criar(client)
+    assert r.status_code == 201
+    m = r.get_json()
+    assert (m["notaMinima"], m["notaTotal"]) == (60.0, 100.0)
+    assert isinstance(m["notaMinima"], float) and isinstance(m["notaTotal"], float)
+    assert "nota_minima" not in m
+    lista = client.get(URL).get_json()
+    assert (lista[0]["notaMinima"], lista[0]["notaTotal"]) == (60.0, 100.0)
+
+
+def test_minimo_e_total_obrigatorios_ao_criar(client):
+    dados = {"nome": "Cálculo", "semestre": "2026.2", "status": "cursando", "notaMinima": 60}
+    r = client.post(URL, json=dados)
+    assert (r.status_code, r.get_json()) == (400, {"erro": MSG_TOTAL})
+
+
+@pytest.mark.parametrize("valor", [-1, "60", True, 7.55, 10000])
+def test_validacao_pontos(client, valor):
+    r = criar(client, notaMinima=valor)
+    assert (r.status_code, r.get_json()) == (
+        400, {"erro": "A nota mínima deve ser um número de 0 a 9999,9 com até 1 casa decimal."})
+
+
+def test_pontos_com_uma_casa_aceitos(client):
+    m = criar(client, notaMinima=7.5, notaTotal=10).get_json()
+    assert (m["notaMinima"], m["notaTotal"]) == (7.5, 10.0)
+
+
+def test_total_zero_recusado(client):
+    r = criar(client, notaMinima=0, notaTotal=0)
+    assert (r.status_code, r.get_json()) == (400, {"erro": "O total de pontos deve ser maior que zero."})
+
+
+def test_minimo_maior_que_total(client):
+    r = criar(client, notaMinima=120, notaTotal=100)
+    assert (r.status_code, r.get_json()) == (400, {"erro": MSG_MIN_TOTAL})
+
+
+def test_patch_minimo_compara_com_total_gravado(client):
+    mid = criar(client).get_json()["id"]
+    r = client.patch(f"{URL}/{mid}", json={"notaMinima": 120})
+    assert (r.status_code, r.get_json()) == (400, {"erro": MSG_MIN_TOTAL})
+    r = client.patch(f"{URL}/{mid}", json={"notaMinima": 70, "notaTotal": 80})
+    assert (r.get_json()["notaMinima"], r.get_json()["notaTotal"]) == (70.0, 80.0)
+
+
+def test_materia_antiga_sem_valores_aceita_patch_parcial(client, db):
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO materias (nome, semestre, cor, status) VALUES ('Antiga', '2026.2', '#6c8cff', 'cursando')"
+        )
+        mid = cur.lastrowid
+    r = client.patch(f"{URL}/{mid}", json={"nome": "Antiga 2"})
+    assert r.status_code == 200
+    assert (r.get_json()["notaMinima"], r.get_json()["notaTotal"]) == (None, None)
+    r = client.patch(f"{URL}/{mid}", json={"notaMinima": 50})
+    assert r.get_json()["notaMinima"] == 50.0

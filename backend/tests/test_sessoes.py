@@ -7,7 +7,7 @@ MSG_DATA = "Data inválida. Use o formato AAAA-MM-DD."
 
 
 def materia(client, nome="Cálculo"):
-    r = client.post("/api/materias", json={"nome": nome, "semestre": "2026.2", "cor": "#6c8cff", "status": "cursando"})
+    r = client.post("/api/materias", json={"nome": nome, "semestre": "2026.2", "cor": "#6c8cff", "status": "cursando", "notaMinima": 60, "notaTotal": 100})
     return r.get_json()["id"]
 
 

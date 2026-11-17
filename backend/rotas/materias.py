@@ -5,7 +5,7 @@ import pymysql
 from flask import Blueprint, jsonify, request
 
 from conexao.conexao import get_conexao
-from rotas.validacao import ErroValidacao, erro
+from rotas.validacao import ErroValidacao, erro, pontos_json, validar_pontos
 
 bp = Blueprint("materias", __name__, url_prefix="/api/materias")
 
@@ -18,7 +18,7 @@ RE_SEMESTRE = re.compile(r"^\d{4}\.[12]$")
 RE_COR = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 SQL_LISTA = """
-SELECT m.id, m.nome, m.semestre, m.cor, m.status,
+SELECT m.id, m.nome, m.semestre, m.cor, m.status, m.nota_minima, m.nota_total,
        COALESCE((SELECT SUM(s.minutos) FROM sessoes_estudo s WHERE s.materia_id = m.id), 0) AS minutosTotais,
        (SELECT COUNT(*) FROM trabalhos t WHERE t.materia_id = m.id) AS trabalhos,
        (SELECT COUNT(*) FROM trabalhos t WHERE t.materia_id = m.id AND NOT t.concluido) AS trabalhosPendentes
@@ -48,12 +48,23 @@ def validar(dados, parcial=False):
         if dados.get("status") not in STATUS:
             raise ErroValidacao("Situação inválida. Use 'cursando' ou 'cursada'.")
         limpo["status"] = dados["status"]
+    if "notaMinima" in dados or not parcial:
+        limpo["nota_minima"] = validar_pontos(dados.get("notaMinima"), "A nota mínima")
+    if "notaTotal" in dados or not parcial:
+        limpo["nota_total"] = validar_pontos(dados.get("notaTotal"), "O total de pontos", positivo=True)
+    if not parcial:
+        checar_minimo(limpo["nota_minima"], limpo["nota_total"])
     cor = dados.get("cor")
     if cor is not None:
         if not isinstance(cor, str) or not RE_COR.match(cor):
             raise ErroValidacao("Cor inválida. Use o formato #rrggbb.")
         limpo["cor"] = cor.lower()
     return limpo
+
+
+def checar_minimo(minimo, total):
+    if minimo is not None and total is not None and minimo > total:
+        raise ErroValidacao("A nota mínima não pode passar do total.")
 
 
 def proxima_cor(cur):
@@ -88,6 +99,8 @@ def buscar(cur, where="", params=()):
         m["trabalhos"] = int(m["trabalhos"])
         m["trabalhosPendentes"] = int(m["trabalhosPendentes"])
         m["provas"] = provas.get(m["id"], [])
+        m["notaMinima"] = pontos_json(m.pop("nota_minima"))
+        m["notaTotal"] = pontos_json(m.pop("nota_total"))
     return materias
 
 
@@ -124,8 +137,10 @@ def criar():
         if "cor" not in dados:
             dados["cor"] = proxima_cor(cur)
         cur.execute(
-            "INSERT INTO materias (nome, semestre, cor, status) VALUES (%s, %s, %s, %s)",
-            (dados["nome"], dados["semestre"], dados["cor"], dados["status"]),
+            "INSERT INTO materias (nome, semestre, cor, status, nota_minima, nota_total) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (dados["nome"], dados["semestre"], dados["cor"], dados["status"],
+             dados["nota_minima"], dados["nota_total"]),
         )
         return jsonify(buscar_uma(cur, cur.lastrowid)), 201
 
@@ -134,8 +149,14 @@ def criar():
 def editar(mid):
     dados = validar(request.get_json(silent=True), parcial=True)
     with get_conexao() as con, con.cursor() as cur:
-        if buscar_uma(cur, mid) is None:
+        atual = buscar_uma(cur, mid)
+        if atual is None:
             return erro("Matéria não encontrada.", 404)
+        # Campo que não veio no PATCH usa o valor gravado.
+        checar_minimo(
+            dados.get("nota_minima", atual["notaMinima"]),
+            dados.get("nota_total", atual["notaTotal"]),
+        )
         if dados:
             colunas = ", ".join(f"{c} = %s" for c in dados)  # nomes vêm de validar(), não do usuário
             cur.execute(f"UPDATE materias SET {colunas} WHERE id = %s", (*dados.values(), mid))

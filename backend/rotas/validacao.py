@@ -1,6 +1,7 @@
 """Validação e respostas de erro compartilhadas pelas rotas da API."""
 import re
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from flask import jsonify
 
@@ -22,6 +23,35 @@ def validar_data(valor):
         except ValueError:
             pass
     raise ErroValidacao("Data inválida. Use o formato AAAA-MM-DD.")
+
+
+PONTOS_MAX = Decimal("9999.9")
+DECIMO = Decimal("0.1")
+
+
+def validar_pontos(valor, rotulo, positivo=False):
+    """Número de 0 a 9999,9 com até 1 casa decimal. Devolve Decimal."""
+    msg = f"{rotulo} deve ser um número de 0 a 9999,9 com até 1 casa decimal."
+    if isinstance(valor, bool) or not isinstance(valor, (int, float)):
+        raise ErroValidacao(msg)
+    try:
+        d = Decimal(str(valor))
+    except InvalidOperation:
+        raise ErroValidacao(msg) from None
+    if not d.is_finite() or d < 0 or d > PONTOS_MAX or d != d.quantize(DECIMO):
+        raise ErroValidacao(msg)
+    if positivo and d == 0:
+        raise ErroValidacao(f"{rotulo} deve ser maior que zero.")
+    return d.quantize(DECIMO)
+
+
+def pontos_json(d):
+    return None if d is None else float(d)
+
+
+def fmt_pontos(d):
+    d = Decimal(d).quantize(DECIMO)
+    return str(int(d)) if d == d.to_integral_value() else str(d).replace(".", ",")
 
 
 def validar_item(dados, campo_data, parcial=False):
