@@ -9,7 +9,7 @@
   --danger: #ff6b6b;
   --ok: #2ec4b6;
   --radius: 16px;
-  --nav-h: 64px;
+  --nav-h: 0px; /* sem barra embaixo: no celular o menu é uma gaveta (☰), no computador fica na lateral */
   color-scheme: dark;
 }
 
@@ -209,9 +209,87 @@ h1, h2, p { margin: 0; }
 }
 .bottom-nav__item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bottom-nav__item.ativo { color: var(--accent); }
-/* 7 itens em celular estreito (~51px cada): rótulo menor para "Calendário" e "Cronômetro" caberem */
-@media (max-width: 420px) { .bottom-nav__item { font-size: 9px; letter-spacing: -0.02em; } }
 .bottom-nav__item:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 8px; }
+
+/* ---------- Celular: menu em gaveta lateral, aberto pelo botão ☰ (menu.js) ---------- */
+@media (max-width: 899px) {
+  .bottom-nav {
+    inset: 0 auto 0 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: min(280px, 82vw);
+    height: auto;
+    padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    background: var(--surface);
+    border-top: 0;
+    border-right: 1px solid var(--borda);
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%);
+    visibility: hidden; /* fechado: fora da ordem de foco e do leitor de tela */
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 220ms;
+  }
+  body.menu-aberto .bottom-nav {
+    transform: none;
+    visibility: visible;
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
+  }
+  body.menu-aberto { overflow: hidden; }
+  .bottom-nav__item {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  .bottom-nav__item .icone { width: 22px; height: 22px; flex-shrink: 0; }
+  .bottom-nav__item.ativo { background: rgba(108, 140, 255, 0.16); }
+  .bottom-nav__item:active { background: var(--surface-2); }
+
+  .menu-botao, .menu-fechar {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    background: rgba(24, 27, 36, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .menu-botao { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 12px; z-index: 30; }
+  .menu-fechar { flex: none; align-self: flex-end; margin-bottom: 8px; background: none; }
+  .menu-botao:focus-visible, .menu-fechar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .menu-botao .icone, .menu-fechar .icone { width: 22px; height: 22px; }
+
+  .menu-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(5, 6, 10, 0.6);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 220ms, visibility 0s linear 220ms;
+  }
+  body.menu-aberto .menu-fundo { opacity: 1; visibility: visible; transition: opacity 220ms; }
+
+  /* o título de cada página não fica embaixo do ☰ */
+  .topo { min-height: 44px; padding-left: 56px; }
+}
+@media (min-width: 900px) {
+  .menu-botao, .menu-fechar, .menu-fundo { display: none; }
+}
 
 /* ---------- Desktop ---------- */
 @media (min-width: 900px) {
