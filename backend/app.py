@@ -17,6 +17,7 @@ def create_app():
     app.json.ensure_ascii = False
     app.json.sort_keys = False
 
+    from rotas.calendario import bp as calendario_bp
     from rotas.materias import bp as materias_bp
     from rotas.notas import bp as notas_bp
     from rotas.provas import bp as provas_bp
@@ -30,6 +31,7 @@ def create_app():
     app.register_blueprint(sessoes_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(notas_bp)
+    app.register_blueprint(calendario_bp)
 
     @app.errorhandler(BancoIndisponivel)
     def banco_indisponivel(_e):
