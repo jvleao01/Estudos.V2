@@ -1,0 +1,91 @@
+/* Página Notas — depende de componentes.css */
+
+.lista-notas { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.nota-card {
+  padding: 14px 14px 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: inset 5px 0 0 var(--cor);
+}
+.nota-card__topo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.nota-card__nome { min-width: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.nota-card__min { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+.nota-card__pontos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.nota-card__pontos strong { font-weight: 600; }
+.nota-bonus { color: var(--accent); font-weight: 600; }
+
+.nota-barra {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.nota-barra span { display: block; height: 100%; border-radius: inherit; background: var(--cor, var(--accent)); }
+
+.nota-card__jogo { margin-top: 8px; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.nota-aviso { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; color: var(--muted); font-size: 14px; }
+.nota-aviso .icone { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; color: #e9c46a; }
+.nota-aviso a { color: var(--accent); }
+
+.nota-card__vazio { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--borda); color: var(--muted); font-size: 14px; }
+
+.nota-itens { margin: 12px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--borda); }
+.nota-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--borda);
+}
+.nota-item:last-child { border-bottom: 0; }
+.nota-item__info { display: grid; min-width: 0; }
+.nota-item__titulo { font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.nota-item__vale { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.nota-item__nota {
+  min-width: 48px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.nota-item__nota:hover { border-color: var(--accent); }
+.nota-item__nota:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nota-item__link { flex-shrink: 0; color: var(--muted); font-size: 13px; }
+
+/* Folha de nota */
+.nota-vale { margin: -4px 0 16px; color: var(--muted); font-size: 14px; }
+.btn-remover {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 0;
+  background: none;
+  color: var(--danger);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-remover:focus-visible { outline: 2px solid var(--accent); border-radius: 10px; }
