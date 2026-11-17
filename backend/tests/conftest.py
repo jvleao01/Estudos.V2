@@ -13,7 +13,7 @@ import pymysql  # noqa: E402
 
 from conexao.conexao import config_banco  # noqa: E402
 
-TABELAS = ["sessoes_estudo", "trabalhos", "provas", "materias"]
+TABELAS = ["aulas_desmarcadas", "aulas_semana", "semestres", "sessoes_estudo", "trabalhos", "provas", "materias"]
 
 
 def _conexao_servidor():

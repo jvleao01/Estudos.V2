@@ -49,6 +49,27 @@ CREATE TABLE IF NOT EXISTS provas (
   CONSTRAINT fk_prova_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS semestres (
+  semestre CHAR(6) PRIMARY KEY,
+  inicio DATE NOT NULL,
+  fim DATE NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- dia_semana: 1 = segunda ... 6 = sábado (numeração de Date.getDay() no navegador)
+CREATE TABLE IF NOT EXISTS aulas_semana (
+  materia_id INT NOT NULL,
+  dia_semana TINYINT NOT NULL,
+  PRIMARY KEY (materia_id, dia_semana),
+  CONSTRAINT fk_aula_semana_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS aulas_desmarcadas (
+  materia_id INT NOT NULL,
+  data DATE NOT NULL,
+  PRIMARY KEY (materia_id, data),
+  CONSTRAINT fk_aula_desmarcada_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Atualizações para bancos criados por versões anteriores (pode rodar de novo, não apaga dados)
 UPDATE trabalhos SET entrega = CURDATE() WHERE entrega IS NULL;
 ALTER TABLE trabalhos MODIFY entrega DATE NOT NULL;

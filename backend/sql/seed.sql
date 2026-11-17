@@ -4,6 +4,9 @@
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE aulas_desmarcadas;
+TRUNCATE TABLE aulas_semana;
+TRUNCATE TABLE semestres;
 TRUNCATE TABLE sessoes_estudo;
 TRUNCATE TABLE trabalhos;
 TRUNCATE TABLE provas;
@@ -46,3 +49,13 @@ INSERT INTO provas (materia_id, titulo, data, concluido, valor, nota, simulado) 
   (3, 'Simulado de POO', CURDATE() + INTERVAL 9 DAY, 0, 10, NULL, 1),
   (4, 'P1', CURDATE() - INTERVAL 3 DAY, 1, 40, 8, 0),
   (4, 'P2', CURDATE() + INTERVAL 15 DAY, 0, 30, NULL, 0);
+
+-- Calendário: semestre 2026.2 e dias de aula (1 = segunda ... 6 = sábado)
+INSERT INTO semestres (semestre, inicio, fim) VALUES ('2026.2', '2026-08-03', '2026-12-12');
+INSERT INTO aulas_semana (materia_id, dia_semana) VALUES
+  (1, 1), (1, 3),
+  (2, 2), (2, 5),
+  (3, 4),
+  (4, 1);
+-- Física I sem aula na terça 17/11/2026
+INSERT INTO aulas_desmarcadas (materia_id, data) VALUES (2, '2026-11-17');

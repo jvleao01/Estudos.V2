@@ -67,3 +67,27 @@ def test_decimal_guarda_uma_casa(db):
         cur.execute("UPDATE provas SET valor = 7.5")
         cur.execute("SELECT valor FROM provas")
         assert cur.fetchone()[0] == Decimal("7.5")
+
+
+def test_tabelas_do_calendario_existem(db):
+    with db.cursor() as cur:
+        mid = _materia(cur)
+        cur.execute("INSERT INTO semestres (semestre, inicio, fim) VALUES ('2026.2', '2026-08-03', '2026-12-12')")
+        cur.execute("INSERT INTO aulas_semana (materia_id, dia_semana) VALUES (%s, 1)", (mid,))
+        cur.execute("INSERT INTO aulas_desmarcadas (materia_id, data) VALUES (%s, '2026-11-16')", (mid,))
+        cur.execute("SELECT semestre, inicio, fim FROM semestres")
+        assert [str(v) for v in cur.fetchone()] == ["2026.2", "2026-08-03", "2026-12-12"]
+        cur.execute("SELECT dia_semana FROM aulas_semana")
+        assert cur.fetchone()[0] == 1
+        cur.execute("SELECT data FROM aulas_desmarcadas")
+        assert str(cur.fetchone()[0]) == "2026-11-16"
+
+
+def test_cascade_apaga_aulas_da_materia(db):
+    with db.cursor() as cur:
+        mid = _materia(cur)
+        cur.execute("INSERT INTO aulas_semana (materia_id, dia_semana) VALUES (%s, 3)", (mid,))
+        cur.execute("INSERT INTO aulas_desmarcadas (materia_id, data) VALUES (%s, '2026-11-18')", (mid,))
+        cur.execute("DELETE FROM materias WHERE id = %s", (mid,))
+        cur.execute("SELECT (SELECT COUNT(*) FROM aulas_semana) + (SELECT COUNT(*) FROM aulas_desmarcadas)")
+        assert cur.fetchone()[0] == 0
