@@ -102,6 +102,46 @@ h1, h2, p { margin: 0; }
 }
 .grafico > .vazio { height: 100%; }
 
+.card__link { margin-left: auto; color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; }
+.card__link:hover { text-decoration: underline; }
+.card__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------- Card Notas ---------- */
+.dash-notas, .dash-semana, .dash-dia__eventos { list-style: none; margin: 0; padding: 0; }
+.dash-nota {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--borda);
+}
+.dash-nota:first-child { border-top: 0; padding-top: 0; }
+.dash-nota__nome { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-nota__nome .ponto { flex-shrink: 0; }
+.dash-nota__barra { height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.dash-nota__barra span { display: block; height: 100%; border-radius: inherit; background: var(--cor, var(--accent)); }
+.dash-nota__pontos { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+.dash-selo { padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dash-selo--ok { background: rgba(46, 196, 182, 0.14); color: var(--ok); }
+.dash-selo--perigo { background: rgba(255, 107, 107, 0.14); color: var(--danger); }
+.dash-obs { padding-top: 10px; border-top: 1px solid var(--borda); color: var(--muted); font-size: 13px; }
+
+/* ---------- Card Esta semana ---------- */
+.dash-dia { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--borda); }
+.dash-dia:first-child { border-top: 0; padding-top: 0; }
+.dash-dia__data { color: var(--muted); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.dash-dia--hoje .dash-dia__data { color: var(--accent); }
+.dash-ev { display: flex; align-items: baseline; gap: 8px; font-size: 14px; overflow-wrap: anywhere; }
+.dash-ev + .dash-ev { margin-top: 4px; }
+.dash-ev--feriado { color: #e9c46a; font-weight: 600; }
+.dash-ev--apagado { color: var(--muted); }
+.dash-ev--apagado.dash-ev { text-decoration: line-through; text-decoration-color: var(--muted); }
+.dash-marca { display: inline-block; flex-shrink: 0; width: 8px; height: 8px; background: var(--cor, var(--accent)); transform: translateY(-1px); }
+.dash-marca--aula { border-radius: 50%; }
+.dash-marca--prova { width: 9px; height: 9px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.dash-marca--entrega { border-radius: 1px; }
+
 /* ---------- Próximas provas ---------- */
 .lista-provas, .ranking { list-style: none; margin: 0; padding: 0; }
 

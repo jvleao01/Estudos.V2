@@ -1,4 +1,5 @@
-/* Renderização do Dashboard. Depende de: Chart.js, AOS (opcional), animacoes.js, api.js, data.js, dashboard-utils.js */
+/* Renderização do Dashboard. Depende de: Chart.js, AOS (opcional), animacoes.js, api.js, data.js, dashboard-utils.js,
+   notas-utils.js, calendario-utils.js, dashboard-resumo.js (cards Notas e Esta semana) */
 (function () {
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const MSG_VAZIO = 'Nenhum estudo registrado nesta semana';
@@ -193,6 +194,79 @@
     renderPizza(data.materias, total);
   }
 
+  // ---------- card Notas ----------
+  function renderNotas(materias) {
+    const lista = document.getElementById('lista-notas');
+    const { linhas, semValores } = notasPorFalta(materias);
+    if (!linhas.length) {
+      return mostrarVazio(lista, semValores ? 'Defina o mínimo e o total das matérias em Matérias' : 'Nenhuma matéria cursando');
+    }
+    const itens = linhas.map((l) => {
+      const r = l.resumo;
+      const sit = textoSituacao(r);
+      const pct = l.notaMinima > 0 ? Math.min(100, Math.round((r.final / l.notaMinima) * 100)) : 100;
+      return el('li', { class: 'dash-nota' },
+        el('span', { class: 'dash-nota__nome' }, el('span', { class: 'ponto', style: `--cor:${l.cor}` }), l.nome),
+        el('span', { class: `dash-selo dash-selo--${sit.classe}` }, sit.texto),
+        el('span', {
+          class: 'dash-nota__barra', role: 'progressbar', 'aria-label': `${l.nome}: progresso até o mínimo`,
+          'aria-valuemin': '0', 'aria-valuemax': String(l.notaMinima), 'aria-valuenow': String(Math.min(r.final, l.notaMinima)),
+        }, el('span', { style: `--cor:${l.cor};width:${pct}%` })),
+        el('span', { class: 'dash-nota__pontos' }, `${formatarPontos(r.final)}/${formatarPontos(l.notaMinima)}`));
+    });
+    if (semValores) {
+      itens.push(el('li', { class: 'dash-obs' },
+        `${semValores} ${semValores === 1 ? 'matéria sem mínimo definido' : 'matérias sem mínimo definido'}`));
+    }
+    lista.replaceChildren(...itens);
+  }
+
+  // ---------- card Esta semana ----------
+  function linhaSemana(classeMarca, cor, texto, extra) {
+    return el('li', { class: `dash-ev${extra ? ` ${extra}` : ''}` },
+      el('span', { class: `dash-marca ${classeMarca}`, style: `--cor:${cor}`, 'aria-hidden': 'true' }), texto);
+  }
+
+  function renderSemana(inicio, porMes) {
+    const lista = document.getElementById('lista-semana');
+    const hoje = (() => { const h = new Date(); return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`; })();
+    const dias = diasDaSemana(inicio, porMes)
+      .filter((d) => d.feriado || d.aulas.length || d.provas.length || d.trabalhos.length);
+    if (!dias.length) return mostrarVazio(lista, 'Nada nesta semana');
+    lista.replaceChildren(...dias.map((d) => {
+      const eventos = [];
+      if (d.feriado) eventos.push(el('li', { class: 'dash-ev dash-ev--feriado' }, `Feriado: ${d.feriado}`));
+      for (const a of d.aulas) {
+        eventos.push(linhaSemana('dash-marca--aula', a.cor, `${a.nome} · ${a.desmarcada ? 'sem aula' : 'aula'}`,
+          a.desmarcada ? 'dash-ev--apagado' : ''));
+      }
+      for (const p of d.provas) {
+        eventos.push(linhaSemana('dash-marca--prova', p.materia.cor, `${p.simulado ? 'Simulado' : 'Prova'}: ${p.titulo} — ${p.materia.nome}`,
+          p.concluido ? 'dash-ev--apagado' : ''));
+      }
+      for (const t of d.trabalhos) {
+        eventos.push(linhaSemana('dash-marca--entrega', t.materia.cor, `Entrega: ${t.titulo} — ${t.materia.nome}`,
+          t.concluido ? 'dash-ev--apagado' : ''));
+      }
+      const [, m, dia] = d.data.split('-');
+      const nomeDia = DIAS[parseDataLocal(d.data).getDay()].slice(0, 3);
+      return el('li', { class: `dash-dia${d.data === hoje ? ' dash-dia--hoje' : ''}` },
+        el('span', { class: 'dash-dia__data' }, d.data === hoje ? `Hoje ${dia}/${m}` : `${nomeDia} ${dia}/${m}`),
+        el('ul', { class: 'dash-dia__eventos' }, ...eventos));
+    }));
+  }
+
+  // Cada card carrega sozinho: se um falhar, o resto do Dashboard continua.
+  async function carregarCards(inicio) {
+    const notas = apiFetch('/api/notas')
+      .then(renderNotas)
+      .catch((e) => mostrarVazio(document.getElementById('lista-notas'), e.message));
+    const semana = Promise.all(mesesDaSemana(inicio).map((mes) => apiFetch(`/api/calendario?mes=${mes}`).then((d) => [mes, d])))
+      .then((pares) => renderSemana(inicio, Object.fromEntries(pares)))
+      .catch((e) => mostrarVazio(document.getElementById('lista-semana'), e.message));
+    await Promise.all([notas, semana]);
+  }
+
   function renderErro(msg) {
     document.getElementById('total-semana').textContent = '—';
     for (const id of ['wrap-materias', 'lista-provas', 'wrap-dias', 'lista-ranking', 'wrap-pizza']) {
@@ -204,6 +278,7 @@
   // Espera a fonte carregar: o Chart.js mede os rótulos no momento do desenho.
   document.addEventListener('DOMContentLoaded', async () => {
     animarEntrada(document.querySelectorAll('.dashboard > .card'));
+    carregarCards(segundaFeira(new Date()));
     const fontes = document.fonts ? document.fonts.ready : Promise.resolve();
     try {
       const [data] = await Promise.all([getDashboardData(), fontes]);
