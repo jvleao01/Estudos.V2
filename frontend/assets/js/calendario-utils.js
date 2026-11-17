@@ -37,11 +37,13 @@
       ['12-08', 'Imaculada Conceição'], ['12-25', 'Natal'],
     ];
     for (const [md, nome] of fixos) f.set(`${ano}-${md}`, nome);
+    // Feriado móvel que cai num fixo (ex.: Sexta-feira Santa em 21/04/2000) junta os nomes.
+    const juntar = (data, nome) => f.set(data, f.has(data) ? `${f.get(data)} · ${nome}` : nome);
     const p = pascoa(ano);
-    f.set(somarDias(p, -48), 'Carnaval');
-    f.set(somarDias(p, -47), 'Carnaval');
-    f.set(somarDias(p, -2), 'Sexta-feira Santa');
-    f.set(somarDias(p, 60), 'Corpus Christi');
+    juntar(somarDias(p, -48), 'Carnaval');
+    juntar(somarDias(p, -47), 'Carnaval');
+    juntar(somarDias(p, -2), 'Sexta-feira Santa');
+    juntar(somarDias(p, 60), 'Corpus Christi');
     return f;
   }
 

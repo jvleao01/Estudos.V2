@@ -142,6 +142,8 @@ def intervalo_mes(mes):
     if not m:
         raise ErroValidacao("Mês inválido. Use o formato AAAA-MM.")
     ano, num = int(m.group(1)), int(m.group(2))
+    if not 1 <= ano <= 9998:  # limites de datetime.date (o mês seguinte também precisa existir)
+        raise ErroValidacao("Mês inválido. Use o formato AAAA-MM.")
     inicio = date(ano, num, 1)
     fim = date(ano + 1, 1, 1) if num == 12 else date(ano, num + 1, 1)
     return inicio, fim
@@ -163,6 +165,9 @@ def calendario():
                     (fim, inicio))
         semestres = [{"semestre": s["semestre"], "inicio": s["inicio"].isoformat(), "fim": s["fim"].isoformat()}
                      for s in cur.fetchall()]
+        # Todos os semestres com datas: a página decide o aviso "defina as datas" mesmo em mês fora do período.
+        cur.execute("SELECT semestre FROM semestres ORDER BY semestre")
+        definidos = [s["semestre"] for s in cur.fetchall()]
         aulas = []
         if semestres:
             nomes = [s["semestre"] for s in semestres]
@@ -191,4 +196,4 @@ def calendario():
 
         provas = [formatar(p, bool(p["simulado"])) for p in itens_do_mes(cur, "provas", "data", inicio, fim, ", t.simulado")]
         trabalhos = [formatar(t) for t in itens_do_mes(cur, "trabalhos", "entrega", inicio, fim)]
-        return jsonify(semestres=semestres, aulas=aulas, desmarcadas=desmarcadas, provas=provas, trabalhos=trabalhos)
+        return jsonify(semestres=semestres, semestresDefinidos=definidos, aulas=aulas, desmarcadas=desmarcadas, provas=provas, trabalhos=trabalhos)

@@ -71,7 +71,7 @@ A API não confere se a data é mesmo um dia de aula (a interface só oferece o 
   - Nacionais fixos: 01/01 Confraternização Universal, 21/04 Tiradentes, 01/05 Dia do Trabalho, 07/09 Independência, 12/10 Nossa Senhora Aparecida, 02/11 Finados, 15/11 Proclamação da República, 20/11 Consciência Negra, 25/12 Natal.
   - Móveis: Carnaval (segunda e terça, Páscoa − 48 e − 47), Sexta-feira Santa (Páscoa − 2), Corpus Christi (Páscoa + 60).
   - Belo Horizonte: 15/08 Assunção de Nossa Senhora, 08/12 Imaculada Conceição.
-- `diasDoMes(ano, mes, dados) -> [{data, diaSemana, feriado: string|null, aulas: [...], provas: [...], trabalhos: [...]}]`:
+- `diasDoMes(ano, mes, dados) -> Map<'AAAA-MM-DD', {feriado: string|null, aulas: [...], provas: [...], trabalhos: [...]}>`:
   - Aula da matéria M no dia D quando: D está entre `inicio` e `fim` (inclusive) do semestre de M; `D.getDay()` está nos dias de M; D não é feriado. Cada aula traz `{materiaId, nome, cor, desmarcada: boolean}` (desmarcada continua na lista do dia, para poder remarcar, mas não gera marcador na grade).
   - Provas e entregas entram no dia da data, mesmo em feriado.
 - `gradeDoMes(ano, mes)`: semanas de domingo a sábado, com os dias de fora do mês como `null` (células vazias).

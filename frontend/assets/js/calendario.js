@@ -5,7 +5,7 @@
   const MAX_MARCAS = 3;
   const RE_MES = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-  const estado = { mes: null, dados: null, dias: new Map(), selecionado: null, carregado: false, semestreFolha: null };
+  const estado = { mes: null, dados: null, dias: new Map(), selecionado: null, carregado: false, animado: false, semestreFolha: null };
   const $ = (id) => document.getElementById(id);
   const dd = (n) => String(n).padStart(2, '0');
 
@@ -48,6 +48,7 @@
   function celula(data) {
     if (!data) return el('div', { class: 'cal-celula cal-celula--vazia', role: 'presentation' });
     const info = estado.dias.get(data);
+    if (!info) return el('div', { class: 'cal-celula cal-celula--vazia', role: 'presentation' });
     const classes = ['cal-celula'];
     if (data === hojeIso()) classes.push('hoje');
     if (data === estado.selecionado) classes.push('selecionado');
@@ -77,15 +78,19 @@
     if (!estado.dias.has(iso)) return;
     e.preventDefault();
     selecionar(iso);
-    const botao = document.querySelector(`.cal-celula[data-data="${iso}"]`);
-    if (botao) botao.focus();
   }
 
   // ---------- lista do dia ----------
   function linhaAula(data, aula) {
     const acao = aula.desmarcada
-      ? el('button', { class: 'item__acao', type: 'button', onclick: () => remarcar(aula, data), 'aria-label': `Remarcar aula de ${aula.nome}` }, 'Remarcar')
-      : el('button', { class: 'item__acao', type: 'button', onclick: () => desmarcar(aula, data), 'aria-label': `Desmarcar aula de ${aula.nome}` }, 'Desmarcar');
+      ? el('button', {
+        class: 'item__acao', type: 'button', 'data-aula': aula.materiaId,
+        onclick: () => remarcar(aula, data), 'aria-label': `Remarcar aula de ${aula.nome}`,
+      }, 'Remarcar')
+      : el('button', {
+        class: 'item__acao', type: 'button', 'data-aula': aula.materiaId,
+        onclick: () => desmarcar(aula, data), 'aria-label': `Desmarcar aula de ${aula.nome}`,
+      }, 'Desmarcar');
     return el('li', { class: `cal-item${aula.desmarcada ? ' cal-item--desmarcada' : ''}`, style: `--cor:${aula.cor}` },
       el('span', { class: 'marca marca--aula', 'aria-hidden': 'true' }),
       el('div', { class: 'cal-item__info' },
@@ -105,6 +110,7 @@
   function renderDia() {
     const data = estado.selecionado;
     const info = estado.dias.get(data);
+    if (!info) { $('dia').replaceChildren(); return; }
     const filhos = [el('h3', { class: 'cal-dia__titulo' }, rotuloDia(data))];
     if (info.feriado) filhos.push(el('p', { class: 'cal-dia__feriado' }, `Feriado: ${info.feriado}`));
     const itens = [
@@ -120,6 +126,14 @@
     estado.selecionado = data;
     renderGrade();
     renderDia();
+    const botao = document.querySelector(`.cal-celula[data-data="${data}"]`);
+    if (botao) botao.focus();
+  }
+
+  // Depois de desmarcar/remarcar a lista é recriada: o foco volta ao botão da mesma matéria.
+  function focarAula(materiaId) {
+    const botao = document.querySelector(`#dia [data-aula="${materiaId}"]`);
+    if (botao) botao.focus();
   }
 
   // ---------- cabeçalho e aviso ----------
@@ -127,7 +141,7 @@
     $('mes-titulo').textContent = rotuloMes(estado.mes);
     $('btn-hoje').hidden = estado.mes === mesAtual();
     const sem = semestreDoMes();
-    const temDatas = estado.dados && estado.dados.semestres.some((s) => s.semestre === sem);
+    const temDatas = estado.dados && estado.dados.semestresDefinidos.includes(sem);
     const aviso = $('aviso-semestre');
     aviso.hidden = !estado.dados || temDatas;
     if (!aviso.hidden) {
@@ -150,13 +164,16 @@
 
   async function carregar() {
     const mes = estado.mes;
-    if (!estado.carregado) $('painel').replaceChildren(el('div', { class: 'estado' }, el('p', {}, 'Carregando...')));
+    if (!estado.carregado) {
+      $('painel').replaceChildren(el('div', { class: 'estado' }, el('p', {}, 'Carregando...')));
+      $('dia').replaceChildren();
+    }
     try {
       const dados = await apiFetch(`/api/calendario?mes=${mes}`);
       if (mes !== estado.mes) return; // trocou de mês enquanto carregava
       const [a, m] = anoMes();
-      const primeira = !estado.carregado;
-      Object.assign(estado, { dados, dias: diasDoMes(a, m, dados), carregado: true });
+      const primeira = !estado.animado;
+      Object.assign(estado, { dados, dias: diasDoMes(a, m, dados), carregado: true, animado: true });
       if (!estado.dias.has(estado.selecionado)) {
         estado.selecionado = estado.dias.has(hojeIso()) ? hojeIso() : `${mes}-01`;
       }
@@ -170,8 +187,7 @@
   }
 
   function irParaMes(mes) {
-    estado.mes = mes;
-    estado.dados = null;
+    Object.assign(estado, { mes, dados: null, dias: new Map(), carregado: false });
     history.replaceState(null, '', `#${mes}`);
     renderTopo();
     carregar();
@@ -182,6 +198,7 @@
     try {
       await apiFetch('/api/aulas/desmarcadas', { method: 'POST', body: { materiaId: aula.materiaId, data } });
       await carregar();
+      focarAula(aula.materiaId);
       toast('Aula desmarcada.', { acao: { texto: 'Desfazer', fn: () => remarcar(aula, data, true) } });
     } catch (e) { toast(e.message, { erro: true }); }
   }
@@ -190,8 +207,13 @@
     try {
       await apiFetch(`/api/aulas/desmarcadas/${aula.materiaId}/${data}`, { method: 'DELETE' });
       await carregar();
+      focarAula(aula.materiaId);
       if (!silencioso) toast('Aula remarcada.');
-    } catch (e) { toast(e.message, { erro: true }); }
+    } catch (e) {
+      // "Desfazer" depois de já ter remarcado pela lista: a aula já está marcada, não é erro.
+      if (silencioso && /não encontrada/.test(e.message)) { await carregar(); return; }
+      toast(e.message, { erro: true });
+    }
   }
 
   // ---------- folha "Aulas da semana" ----------
@@ -222,11 +244,13 @@
     $('dlg-aulas').showModal();
     try {
       const s = await apiFetch(`/api/semestres/${sem}`);
+      if (estado.semestreFolha !== sem || !$('dlg-aulas').open) return; // folha fechada ou reaberta para outro semestre
       form.inicio.value = s.inicio || '';
       form.fim.value = s.fim || '';
       $('tabela-aulas').replaceChildren(tabelaAulas(s.materias));
       form.inicio.focus();
     } catch (e) {
+      if (estado.semestreFolha !== sem) return;
       $('tabela-aulas').replaceChildren();
       mostrarErroAulas(e.message);
     }
@@ -275,6 +299,10 @@
   // "Hoje" muda à meia-noite: redesenha ao voltar para a aba.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && estado.carregado) render();
+  });
+  window.addEventListener('hashchange', () => {
+    const h = location.hash.slice(1);
+    if (RE_MES.test(h) && h !== estado.mes) irParaMes(h);
   });
   const doHash = location.hash.slice(1);
   estado.mes = RE_MES.test(doHash) ? doHash : mesAtual();

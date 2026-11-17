@@ -89,3 +89,9 @@ test('rótulos', () => {
   assert.strictEqual(rotuloDia('2026-11-18'), 'Quarta, 18/11');
   assert.strictEqual(rotuloDia('2026-11-01'), 'Domingo, 01/11');
 });
+
+test('feriados que caem no mesmo dia juntam os nomes', () => {
+  // 2000: Páscoa em 23/04, Sexta-feira Santa em 21/04 (Tiradentes)
+  assert.strictEqual(pascoa(2000), '2000-04-23');
+  assert.strictEqual(feriados(2000).get('2000-04-21'), 'Tiradentes · Sexta-feira Santa');
+});

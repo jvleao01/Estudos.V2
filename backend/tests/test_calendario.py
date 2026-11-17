@@ -170,3 +170,18 @@ def test_excluir_materia_limpa_aulas(client):
     r = client.get(f"{CAL}?mes=2026-11")
     assert r.status_code == 200
     assert (r.get_json()["aulas"], r.get_json()["desmarcadas"]) == ([], [])
+
+
+def test_semestres_definidos_fora_do_mes(client):
+    """Julho cai no semestre 2026.2 (pelo dia 15), que só começa em agosto: a página precisa saber que as datas existem."""
+    mid = materia(client, "Cálculo")
+    put(client, {str(mid): [1]})
+    d = client.get(f"{CAL}?mes=2026-07").get_json()
+    assert d["semestres"] == []
+    assert d["semestresDefinidos"] == ["2026.2"]
+
+
+@pytest.mark.parametrize("mes", ["0000-01", "9999-12"])
+def test_mes_fora_do_intervalo(client, mes):
+    r = client.get(f"{CAL}?mes={mes}")
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Mês inválido. Use o formato AAAA-MM."})
