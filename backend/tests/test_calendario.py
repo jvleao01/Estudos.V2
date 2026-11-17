@@ -86,3 +86,87 @@ def test_put_materia_inexistente(client):
     assert (r.status_code, r.get_json()) == (400, {"erro": "Matéria não pertence a esse semestre."})
     r = put(client, {"abc": [1]})
     assert (r.status_code, r.get_json()) == (400, {"erro": "Matéria não pertence a esse semestre."})
+
+
+# ---------- aulas desmarcadas ----------
+
+DESM = "/api/aulas/desmarcadas"
+
+
+def test_desmarcar_e_remarcar(client):
+    mid = materia(client, "Cálculo")
+    corpo = {"materiaId": mid, "data": "2026-11-16"}
+    r = client.post(DESM, json=corpo)
+    assert (r.status_code, r.get_json()) == (201, corpo)
+    assert client.post(DESM, json=corpo).status_code == 201
+    assert client.delete(f"{DESM}/{mid}/2026-11-16").status_code == 204
+    r = client.delete(f"{DESM}/{mid}/2026-11-16")
+    assert (r.status_code, r.get_json()) == (404, {"erro": "Aula desmarcada não encontrada."})
+
+
+def test_desmarcar_materia_inexistente(client):
+    r = client.post(DESM, json={"materiaId": 9999, "data": "2026-11-16"})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Matéria não encontrada."})
+    r = client.post(DESM, json={"materiaId": "1", "data": "2026-11-16"})
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Matéria não encontrada."})
+
+
+def test_desmarcar_data_invalida(client):
+    mid = materia(client, "Cálculo")
+    r = client.post(DESM, json={"materiaId": mid, "data": "16/11/2026"})
+    assert r.status_code == 400
+    assert client.delete(f"{DESM}/{mid}/2026-02-30").status_code == 400
+
+
+# ---------- mês ----------
+
+CAL = "/api/calendario"
+
+
+@pytest.mark.parametrize("q", ["", "?mes=2026-13", "?mes=2026-1", "?mes=abc"])
+def test_mes_invalido(client, q):
+    r = client.get(CAL + q)
+    assert (r.status_code, r.get_json()) == (400, {"erro": "Mês inválido. Use o formato AAAA-MM."})
+
+
+def test_calendario_do_mes(client):
+    calc = materia(client, "Cálculo")
+    fis = materia(client, "Física")
+    put(client, {str(calc): [1, 3]})
+    p = client.post("/api/provas", json={"materiaId": calc, "titulo": "P2", "data": "2026-11-18", "valor": 30}).get_json()
+    client.post("/api/provas", json={"materiaId": calc, "titulo": "P3", "data": "2026-12-05", "valor": 30})
+    t = client.post("/api/trabalhos", json={"materiaId": fis, "titulo": "Lista", "entrega": "2026-11-30", "valor": 10}).get_json()
+    client.post(DESM, json={"materiaId": calc, "data": "2026-11-16"})
+    client.post(DESM, json={"materiaId": calc, "data": "2026-12-07"})
+    d = client.get(f"{CAL}?mes=2026-11").get_json()
+    assert d["semestres"] == [{"semestre": "2026.2", "inicio": "2026-08-03", "fim": "2026-12-12"}]
+    assert d["aulas"] == [{"materiaId": calc, "nome": "Cálculo", "cor": "#6c8cff", "semestre": "2026.2", "dias": [1, 3]}]
+    assert d["desmarcadas"] == [{"materiaId": calc, "data": "2026-11-16"}]
+    assert d["provas"] == [{"id": p["id"], "materiaId": calc, "materia": {"nome": "Cálculo", "cor": "#6c8cff"},
+                            "titulo": "P2", "data": "2026-11-18", "concluido": False, "simulado": False}]
+    assert d["trabalhos"] == [{"id": t["id"], "materiaId": fis, "materia": {"nome": "Física", "cor": "#6c8cff"},
+                               "titulo": "Lista", "data": "2026-11-30", "concluido": False}]
+
+
+def test_calendario_mes_fora_do_semestre(client):
+    mid = materia(client, "Cálculo")
+    put(client, {str(mid): [1]})
+    d = client.get(f"{CAL}?mes=2027-03").get_json()
+    assert (d["semestres"], d["aulas"]) == ([], [])
+
+
+def test_semestre_que_termina_no_primeiro_dia_do_mes(client):
+    mid = materia(client, "Cálculo")
+    put(client, {str(mid): [2]}, inicio="2026-08-03", fim="2026-12-01")
+    assert client.get(f"{CAL}?mes=2026-12").get_json()["semestres"][0]["fim"] == "2026-12-01"
+    assert client.get(f"{CAL}?mes=2026-07").get_json()["semestres"] == []
+
+
+def test_excluir_materia_limpa_aulas(client):
+    mid = materia(client, "Cálculo")
+    put(client, {str(mid): [1]})
+    client.post(DESM, json={"materiaId": mid, "data": "2026-11-16"})
+    assert client.delete(f"/api/materias/{mid}").status_code == 204
+    r = client.get(f"{CAL}?mes=2026-11")
+    assert r.status_code == 200
+    assert (r.get_json()["aulas"], r.get_json()["desmarcadas"]) == ([], [])
