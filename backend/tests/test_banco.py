@@ -43,3 +43,27 @@ def test_bd_sql_pode_rodar_de_novo_sem_perder_dados(db):
         _executar_script(cur, _script_teste())
         cur.execute("SELECT COUNT(*) FROM provas")
         assert cur.fetchone()[0] == 1
+
+
+def test_colunas_de_nota_existem(db):
+    with db.cursor() as cur:
+        mid = _materia(cur)
+        cur.execute("INSERT INTO provas (materia_id, titulo, data) VALUES (%s, 'P1', '2026-12-01')", (mid,))
+        cur.execute("INSERT INTO trabalhos (materia_id, titulo, entrega) VALUES (%s, 'L1', '2026-12-01')", (mid,))
+        cur.execute("SELECT nota_minima, nota_total FROM materias")
+        assert cur.fetchone() == (None, None)
+        cur.execute("SELECT valor, nota, simulado FROM provas")
+        assert cur.fetchone() == (None, None, 0)
+        cur.execute("SELECT valor, nota FROM trabalhos")
+        assert cur.fetchone() == (None, None)
+
+
+def test_decimal_guarda_uma_casa(db):
+    from decimal import Decimal
+
+    with db.cursor() as cur:
+        mid = _materia(cur)
+        cur.execute("INSERT INTO provas (materia_id, titulo, data) VALUES (%s, 'P1', '2026-12-01')", (mid,))
+        cur.execute("UPDATE provas SET valor = 7.5")
+        cur.execute("SELECT valor FROM provas")
+        assert cur.fetchone()[0] == Decimal("7.5")
