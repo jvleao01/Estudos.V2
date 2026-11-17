@@ -54,6 +54,17 @@
         <input name="semestre" required inputmode="decimal" placeholder="2026.2" pattern="\d{4}\.[12]">
       </label>
 
+      <div class="campos-par">
+        <label class="campo">
+          <span>Nota mínima</span>
+          <input name="notaMinima" type="number" step="0.1" min="0" max="9999.9" inputmode="decimal" required placeholder="60">
+        </label>
+        <label class="campo">
+          <span>Total de pontos</span>
+          <input name="notaTotal" type="number" step="0.1" min="0.1" max="9999.9" inputmode="decimal" required placeholder="100">
+        </label>
+      </div>
+
       <fieldset class="campo" id="campo-status" hidden>
         <legend>Situação</legend>
         <div class="segmentado">

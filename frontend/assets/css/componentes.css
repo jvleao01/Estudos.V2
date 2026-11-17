@@ -257,3 +257,6 @@
   .fab { right: max(16px, calc(50% - var(--lateral) / 2 - 364px)); }
   .toast { left: calc(50% + var(--lateral) / 2); }
 }
+
+/* Dois campos lado a lado (ex.: nota mínima e total) */
+.campos-par { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

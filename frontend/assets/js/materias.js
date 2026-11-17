@@ -129,6 +129,9 @@
     $('form-titulo').textContent = materia ? 'Editar matéria' : (statusNovo === 'cursando' ? 'Nova matéria' : 'Matéria já cursada');
     form.nome.value = materia ? materia.nome : '';
     form.semestre.value = materia ? materia.semestre : semestreAtual(new Date());
+    const ponto = (v) => (v === null || v === undefined ? '' : String(v));
+    form.notaMinima.value = materia ? ponto(materia.notaMinima) : '';
+    form.notaTotal.value = materia ? ponto(materia.notaTotal) : '';
     $('campo-status').hidden = !materia;
     form.querySelector(`input[name="status"][value="${materia ? materia.status : statusNovo}"]`).checked = true;
     const permitirAuto = !materia && statusNovo === 'cursada';
@@ -152,7 +155,13 @@
     if (!nome) return mostrarErro('Informe o nome da matéria.');
     if (!/^\d{4}\.[12]$/.test(semestre)) return mostrarErro('Semestre inválido. Use o formato 2026.1 ou 2026.2.');
 
-    const dados = { nome, semestre, status: form.querySelector('input[name="status"]:checked').value };
+    const notaMinima = form.notaMinima.value === '' ? NaN : Number(form.notaMinima.value);
+    const notaTotal = form.notaTotal.value === '' ? NaN : Number(form.notaTotal.value);
+    if (!Number.isFinite(notaMinima) || !Number.isFinite(notaTotal)) return mostrarErro('Informe a nota mínima e o total de pontos.');
+    if (notaTotal <= 0) return mostrarErro('O total de pontos deve ser maior que zero.');
+    if (notaMinima > notaTotal) return mostrarErro('A nota mínima não pode passar do total.');
+
+    const dados = { nome, semestre, status: form.querySelector('input[name="status"]:checked').value, notaMinima, notaTotal };
     const cor = form.querySelector('input[name="cor"]:checked');
     if (cor && cor.value !== 'auto') dados.cor = cor.value;
 
