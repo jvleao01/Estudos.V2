@@ -44,6 +44,14 @@
       <div class="sheet__alca" aria-hidden="true"></div>
       <h2 id="form-titulo">Novo trabalho</h2>
 
+      <fieldset class="campo" id="campo-tipo" hidden>
+        <legend>Tipo</legend>
+        <div class="segmentado">
+          <label><input type="radio" name="tipo" value="prova" checked><span>Prova</span></label>
+          <label><input type="radio" name="tipo" value="simulado"><span>Simulado</span></label>
+        </div>
+      </fieldset>
+
       <label class="campo">
         <span>Matéria</span>
         <select name="materia" required></select>
@@ -57,6 +65,11 @@
       <label class="campo">
         <span>Descrição</span>
         <input name="titulo" maxlength="120" required autocomplete="off" placeholder="Ex.: Lista 3 – derivadas">
+      </label>
+
+      <label class="campo">
+        <span>Valor (pontos)</span>
+        <input name="valor" type="number" step="0.1" min="0.1" max="9999.9" inputmode="decimal" required placeholder="Ex.: 30">
       </label>
 
       <p class="form-erro" id="form-erro" role="alert" hidden></p>
@@ -104,6 +117,7 @@
   <script src="../assets/js/dashboard-utils.js"></script>
   <script src="../assets/js/materias-utils.js"></script>
   <script src="../assets/js/trabalhos-utils.js"></script>
+  <script src="../assets/js/notas-utils.js"></script>
   <script src="../assets/js/api.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script src="../assets/js/animacoes.js"></script>

@@ -13,6 +13,18 @@
 .item__topo { display: flex; align-items: flex-start; gap: 8px; }
 .item__titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
 .item__linha { margin-top: 4px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.etiqueta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(108, 140, 255, 0.14);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.item__nota { margin-top: 4px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .item__rodape { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
 
 .selo {

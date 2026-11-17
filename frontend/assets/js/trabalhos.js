@@ -1,6 +1,9 @@
 /* Página Trabalhos e Provas.
-   Depende de: dashboard-utils.js, materias-utils.js (formatarDataCurta), trabalhos-utils.js, api.js, ui.js */
+   Depende de: dashboard-utils.js, materias-utils.js (formatarDataCurta), trabalhos-utils.js,
+   notas-utils.js (formatarPontos), api.js, ui.js */
 (function () {
+  const vale = (item) => (item.valor === null ? '' : ` · vale ${formatarPontos(item.valor)}`);
+
   // As duas abas têm o mesmo comportamento; muda só a API, o nome do campo de data e os textos.
   const CONFIG = {
     trabalhos: {
@@ -10,7 +13,7 @@
       vazio: 'Nenhum trabalho cadastrado.', botaoVazio: 'Adicionar trabalho',
       adicionado: 'Trabalho adicionado.', atualizado: 'Trabalho atualizado.', excluido: 'Trabalho excluído.',
       tituloExcluir: 'Excluir trabalho?', apagado: 'apagado',
-      linha: (item) => `${item.materia.nome} · entrega ${formatarDataCurta(item.entrega)}`,
+      linha: (item) => `${item.materia.nome} · entrega ${formatarDataCurta(item.entrega)}${vale(item)}`,
     },
     provas: {
       url: '/api/provas', campoData: 'data', tipo: 'prova',
@@ -19,7 +22,7 @@
       vazio: 'Nenhuma prova cadastrada.', botaoVazio: 'Adicionar prova',
       adicionado: 'Prova adicionada.', atualizado: 'Prova atualizada.', excluido: 'Prova excluída.',
       tituloExcluir: 'Excluir prova?', apagado: 'apagada',
-      linha: (item) => `${item.materia.nome} · ${formatarDataCurta(item.data)}`,
+      linha: (item) => `${item.materia.nome} · ${formatarDataCurta(item.data)}${vale(item)}`,
     },
   };
   const ABAS = ['trabalhos', 'provas'];
@@ -41,7 +44,8 @@
 
   function topo(item) {
     return el('div', { class: 'item__topo' },
-      el('h3', { class: 'item__titulo' }, item.titulo),
+      el('h3', { class: 'item__titulo' }, item.titulo,
+        item.simulado ? el('span', { class: 'etiqueta' }, 'Simulado') : null),
       menu(item.titulo, item, acoesMenu(item.concluido)));
   }
 
@@ -60,7 +64,10 @@
   function itemFeito(item) {
     return el('li', { class: 'item item--feito', 'data-titulo': item.titulo, style: `--cor:${item.materia.cor}` },
       topo(item),
-      el('p', { class: 'item__linha' }, cfg().linha(item)));
+      el('p', { class: 'item__linha' }, cfg().linha(item)),
+      item.nota !== null && item.valor !== null
+        ? el('p', { class: 'item__nota' }, `Nota ${formatarPontos(item.nota)} / ${formatarPontos(item.valor)}`)
+        : null);
   }
 
   function estadoVazio() {
@@ -176,15 +183,32 @@
     const form = $('form-item');
     form.reset();
     $('form-erro').hidden = true;
-    $('form-titulo').textContent = item ? c.editar : c.novo;
+    $('campo-tipo').hidden = c.tipo !== 'prova';
+    form.querySelector(`input[name="tipo"][value="${item && item.simulado ? 'simulado' : 'prova'}"]`).checked = true;
+    atualizarTituloForm();
     $('rotulo-data').textContent = c.rotuloData;
     form.titulo.placeholder = c.exemplo;
     form.materia.replaceChildren(...opcoesMateria(item));
     form.titulo.value = item ? item.titulo : '';
     form.data.value = item ? item[c.campoData] : '';
+    form.valor.value = item && item.valor !== null ? String(item.valor) : '';
     $('dlg-form').showModal();
     (item ? form.titulo : form.materia).focus();
   }
+
+  function ehSimulado() {
+    return cfg().tipo === 'prova' && $('form-item').querySelector('input[name="tipo"]:checked').value === 'simulado';
+  }
+
+  function atualizarTituloForm() {
+    const c = cfg();
+    const editando = Boolean(estado.editando);
+    $('form-titulo').textContent = ehSimulado()
+      ? (editando ? 'Editar simulado' : 'Novo simulado')
+      : (editando ? c.editar : c.novo);
+  }
+
+  $('campo-tipo').addEventListener('change', atualizarTituloForm);
 
   $('form-item').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -197,8 +221,11 @@
     if (!form.materia.value) return mostrarErro('Escolha a matéria.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return mostrarErro('Data inválida. Use o formato AAAA-MM-DD.');
     if (!titulo || titulo.length > 120) return mostrarErro('A descrição deve ter entre 1 e 120 caracteres.');
+    const valor = form.valor.value === '' ? NaN : Number(form.valor.value);
+    if (!Number.isFinite(valor) || valor <= 0) return mostrarErro('Informe o valor (maior que zero).');
 
-    const dados = { materiaId: Number(form.materia.value), titulo, [c.campoData]: data };
+    const dados = { materiaId: Number(form.materia.value), titulo, [c.campoData]: data, valor };
+    if (c.tipo === 'prova') dados.simulado = ehSimulado();
     const botao = $('btn-salvar');
     botao.disabled = true;
     try {
