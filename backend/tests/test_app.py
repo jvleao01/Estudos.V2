@@ -27,3 +27,19 @@ def test_saude_ok(client):
     r = client.get("/api/saude")
     assert r.status_code == 200
     assert r.get_json() == {"ok": True}
+
+
+def test_index_da_raiz_tambem_em_index_html(client):
+    r = client.get("/index.html")
+    assert r.status_code == 200
+    assert "Dashboard" in r.get_data(as_text=True)
+
+
+def test_paginas_e_assets_sob_frontend(client):
+    assert client.get("/frontend/pages/notas.html").status_code == 200
+    assert client.get("/frontend/assets/css/style.css").status_code == 200
+
+
+def test_nao_expoe_arquivos_do_repositorio(client):
+    for caminho in ["/backend/app.py", "/frontend/../backend/app.py", "/README.md", "/.env"]:
+        assert client.get(caminho).status_code == 404, caminho

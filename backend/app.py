@@ -8,7 +8,8 @@ from flask import Flask, jsonify, send_from_directory
 
 from conexao.conexao import BancoIndisponivel, get_conexao
 
-FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
+RAIZ = Path(__file__).resolve().parents[1]
+FRONTEND = RAIZ / "frontend"
 
 
 def create_app():
@@ -39,9 +40,16 @@ def create_app():
         get_conexao().close()
         return jsonify(ok=True)
 
+    # O Dashboard fica na raiz do repositório; o resto do site, em frontend/.
+    # Só index.html é servido da raiz: o restante do repositório (backend, .env) nunca é exposto.
     @app.get("/")
+    @app.get("/index.html")
     def index():
-        return send_from_directory(FRONTEND, "index.html")
+        return send_from_directory(RAIZ, "index.html")
+
+    @app.get("/frontend/<path:caminho>")
+    def estatico_frontend(caminho):
+        return send_from_directory(FRONTEND, caminho)
 
     @app.get("/<path:caminho>")
     def estatico(caminho):
